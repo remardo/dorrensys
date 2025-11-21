@@ -297,6 +297,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 }
               />
             </Field>
+            <Field label="Описание (развернуто)">
+              <textarea
+                className="w-full border border-gray-200 px-3 py-2 text-sm h-24"
+                value={selectedNews.description ?? ''}
+                onChange={(e) =>
+                  setNewsList((prev) =>
+                    prev.map((n) => (n.id === selectedNews.id ? { ...n, description: e.target.value } : n)),
+                  )
+                }
+              />
+            </Field>
             <Field label="Slug (для ссылки)">
               <input
                 className="w-full border border-gray-200 px-3 py-2 text-sm"

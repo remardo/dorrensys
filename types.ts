@@ -21,6 +21,7 @@ export interface NewsItem {
   date: string;
   image: string;
   excerpt: string;
+   description?: string;
   slug?: string;
   body?: string[];
 }

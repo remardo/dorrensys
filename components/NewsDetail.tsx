@@ -35,6 +35,7 @@ const NewsDetail: React.FC<NewsDetailProps> = ({ items }) => {
           <h1 className="text-3xl font-light text-dorren-black leading-tight">{item.title}</h1>
           <p className="text-sm text-gray-400">{item.date}</p>
           <p className="text-base text-gray-700">{item.excerpt}</p>
+          {item.description && <p className="text-base text-gray-700 leading-relaxed">{item.description}</p>}
           <div className="space-y-3 text-sm text-gray-700 leading-relaxed">
             {(item.body ?? []).map((paragraph, idx) => (
               <p key={idx}>{paragraph}</p>
