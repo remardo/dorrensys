@@ -11,8 +11,8 @@ import Docs from './components/Docs';
 import AdminPanel from './components/AdminPanel';
 import Company from './components/Company';
 import { Search, Bell, Menu } from 'lucide-react';
-import { initialCourses, initialDocs, initialNews } from './data';
-import { Course, DocumentItem, NewsItem } from './types';
+import { initialCourses, initialDocs, initialNews, initialHome } from './data';
+import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
 
 const pageTitles: Record<string, string> = {
   '/': 'Главная панель',
@@ -31,6 +31,7 @@ const Layout: React.FC = () => {
   const [newsItems, setNewsItems] = useState<NewsItem[]>(initialNews);
   const [docs, setDocs] = useState<DocumentItem[]>(initialDocs);
   const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [home, setHome] = useState<HomeConfig>(initialHome);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const title = pageTitles[location.pathname] ?? 'Portal';
 
@@ -87,7 +88,7 @@ const Layout: React.FC = () => {
 
         <div className="p-6 md:p-10 flex-1 overflow-y-auto">
           <Routes>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<Dashboard home={home} />} />
             <Route path="/news" element={<News items={newsItems} />} />
             <Route path="/news/:slugOrId" element={<NewsDetail items={newsItems} />} />
             <Route path="/tasks" element={<TasksKanban />} />
@@ -101,15 +102,17 @@ const Layout: React.FC = () => {
                   news={newsItems}
                   docs={docs}
                   courses={courses}
+                  home={home}
                   onNewsChange={setNewsItems}
                   onDocsChange={setDocs}
                   onCoursesChange={setCourses}
+                  onHomeChange={setHome}
                   adminEnabled={adminMode}
                 />
               }
             />
             <Route path="/company" element={<Company />} />
-            <Route path="*" element={<Dashboard />} />
+            <Route path="*" element={<Dashboard home={home} />} />
           </Routes>
         </div>
       </main>
