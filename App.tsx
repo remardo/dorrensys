@@ -6,6 +6,7 @@ import MerchStore from './components/MerchStore';
 import LMS from './components/LMS';
 import TasksKanban from './components/TasksKanban';
 import News from './components/News';
+import NewsDetail from './components/NewsDetail';
 import Docs from './components/Docs';
 import AdminPanel from './components/AdminPanel';
 import { Search, Bell, Menu } from 'lucide-react';
@@ -86,6 +87,7 @@ const Layout: React.FC = () => {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/news" element={<News items={newsItems} />} />
+            <Route path="/news/:slugOrId" element={<NewsDetail items={newsItems} />} />
             <Route path="/tasks" element={<TasksKanban />} />
             <Route path="/lms" element={<LMS courses={courses} />} />
             <Route path="/store" element={<MerchStore />} />
