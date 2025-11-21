@@ -142,6 +142,7 @@ const Layout: React.FC = () => {
                   onCoursesChange={setCourses}
                   onHomeChange={setHome}
                   adminEnabled={adminMode}
+                  authToken={authToken}
                 />
               }
             />
@@ -161,4 +162,3 @@ const App: React.FC = () => (
 );
 
 export default App;
-

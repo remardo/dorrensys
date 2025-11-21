@@ -1,6 +1,6 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
-import { requireSession } from './auth';
+import { requireAdmin } from './auth';
 
 export const list = query({
   args: {},
@@ -28,7 +28,7 @@ export const upsertBulk = mutation({
     ),
   },
   handler: async ({ db }, { token, items }) => {
-    await requireSession(db, token);
+    await requireAdmin(db, token);
     for (const item of items) {
       const existing = await db.query('news').withIndex('by_id', (q) => q.eq('id', item.id)).first();
       if (existing?._id) {

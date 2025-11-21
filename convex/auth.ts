@@ -34,6 +34,16 @@ export const verifyCode = mutation({
 
     const token = generateToken();
     await db.insert('sessions', { email: email.toLowerCase(), token, createdAt: now });
+    // Создаём пользователя, если его нет; первого делаем админом.
+    const existingUser = await db.query('users').withIndex('by_email', (q) => q.eq('email', email.toLowerCase())).first();
+    const anyAdmin = await db.query('users').withIndex('by_role', (q) => q.eq('role', 'admin')).first();
+    if (!existingUser) {
+      await db.insert('users', {
+        email: email.toLowerCase(),
+        role: anyAdmin ? 'user' : 'admin',
+        createdAt: now,
+      });
+    }
     return { token, email: email.toLowerCase() };
   },
 });
@@ -44,4 +54,11 @@ export async function requireSession(db: any, token: string) {
   if (!session) throw new Error('Сессия не найдена');
   if (Date.now() - session.createdAt > SESSION_TTL_MS) throw new Error('Сессия устарела, войдите снова');
   return session;
+}
+
+export async function requireAdmin(db: any, token: string) {
+  const session = await requireSession(db, token);
+  const user = await db.query('users').withIndex('by_email', (q: any) => q.eq('email', session.email)).first();
+  if (!user || user.role !== 'admin') throw new Error('Нужны права администратора');
+  return user;
 }

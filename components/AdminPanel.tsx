@@ -10,8 +10,9 @@ import {
   HomeConfig,
 } from '../types';
 import { Save, AlertTriangle, Plus, Trash, GripVertical, Upload, Image as ImageIcon, Layers, FileText, BookOpen, HelpCircle } from 'lucide-react';
+import UsersAdmin from './UsersAdmin';
 
-type TabKey = 'news' | 'docs' | 'courses' | 'home';
+type TabKey = 'news' | 'docs' | 'courses' | 'home' | 'users';
 
 interface AdminPanelProps {
   news: NewsItem[];
@@ -23,6 +24,7 @@ interface AdminPanelProps {
   onCoursesChange: (items: Course[]) => void;
   onHomeChange: (config: HomeConfig) => void;
   adminEnabled: boolean;
+  authToken?: string | null;
 }
 
 const emptyNews = (): NewsItem => ({
@@ -120,6 +122,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   onCoursesChange,
   onHomeChange,
   adminEnabled,
+  authToken,
 }) => {
   const [tab, setTab] = useState<TabKey>('news');
   const [newsList, setNewsList] = useState(news);
@@ -1198,12 +1201,23 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         >
           Главная
         </button>
+        <button
+          className={`px-3 py-2 border ${tab === 'users' ? 'border-dorren-dark bg-dorren-dark text-white' : 'border-gray-200 text-dorren-dark hover:border-dorren-dark'}`}
+          onClick={() => setTab('users')}
+        >
+          Пользователи
+        </button>
       </div>
 
       {tab === 'news' && newsEditor}
       {tab === 'docs' && docsEditor}
       {tab === 'courses' && coursesEditor}
       {tab === 'home' && homeEditor}
+      {tab === 'users' && (
+        <div className="bg-white border border-gray-100 p-6 shadow-sm">
+          <UsersAdmin token={authToken ?? null} />
+        </div>
+      )}
     </div>
   );
 };
