@@ -1,5 +1,5 @@
 import { ConvexHttpClient } from 'convex/browser';
-import { NewsItem } from './types';
+import { Course, DocumentItem, NewsItem } from './types';
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
 
@@ -29,4 +29,34 @@ export async function pushNewsToConvex(items: NewsItem[], token?: string | null)
   } catch (err) {
     console.warn('Convex news:upsertBulk failed', err);
   }
+}
+
+export async function fetchDocsFromConvex(): Promise<DocumentItem[] | null> {
+  if (!convexClient) return null;
+  try {
+    return (await convexClient.query('docs:list', {})) as DocumentItem[];
+  } catch (e) {
+    console.warn('Convex docs:list failed', e);
+    return null;
+  }
+}
+
+export async function pushDocsToConvex(items: DocumentItem[], token?: string | null) {
+  if (!convexClient || !token) return;
+  await convexClient.mutation('docs:upsertBulk', { items, token });
+}
+
+export async function fetchCoursesFromConvex(): Promise<Course[] | null> {
+  if (!convexClient) return null;
+  try {
+    return (await convexClient.query('courses:list', {})) as Course[];
+  } catch (e) {
+    console.warn('Convex courses:list failed', e);
+    return null;
+  }
+}
+
+export async function pushCoursesToConvex(items: Course[], token?: string | null) {
+  if (!convexClient || !token) return;
+  await convexClient.mutation('courses:upsertBulk', { items, token });
 }

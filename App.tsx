@@ -13,7 +13,7 @@ import Company from './components/Company';
 import { Search, Bell, Menu } from 'lucide-react';
 import { initialCourses, initialDocs, initialNews, initialHome } from './data';
 import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
-import { fetchNewsFromConvex, pushNewsToConvex } from './convexClient';
+import { fetchNewsFromConvex, pushNewsToConvex, fetchDocsFromConvex, pushDocsToConvex, fetchCoursesFromConvex, pushCoursesToConvex } from './convexClient';
 import AuthWidget from './components/AuthWidget';
 import LoginModal from './components/LoginModal';
 
@@ -47,11 +47,27 @@ const Layout: React.FC = () => {
         setNewsItems(items);
       }
     });
+    fetchDocsFromConvex().then((items) => {
+      if (items && items.length) setDocs(items);
+    });
+    fetchCoursesFromConvex().then((items) => {
+      if (items && items.length) setCourses(items);
+    });
   }, []);
 
   const handleNewsChange = async (items: NewsItem[]) => {
     setNewsItems(items);
     await pushNewsToConvex(items, authToken);
+  };
+
+  const handleDocsChange = async (items: DocumentItem[]) => {
+    setDocs(items);
+    await pushDocsToConvex(items, authToken);
+  };
+
+  const handleCoursesChange = async (items: Course[]) => {
+    setCourses(items);
+    await pushCoursesToConvex(items, authToken);
   };
 
   const handleAuth = (token: string, email: string) => {
@@ -146,18 +162,18 @@ const Layout: React.FC = () => {
                 path="/admin"
                 element={
                   <AdminPanel
-                    news={newsItems}
-                    docs={docs}
-                    courses={courses}
-                    home={home}
-                    onNewsChange={handleNewsChange}
-                    onDocsChange={setDocs}
-                    onCoursesChange={setCourses}
-                    onHomeChange={setHome}
-                    adminEnabled={adminMode}
-                    authToken={authToken}
-                  />
-                }
+                  news={newsItems}
+                  docs={docs}
+                  courses={courses}
+                  home={home}
+                  onNewsChange={handleNewsChange}
+                  onDocsChange={handleDocsChange}
+                  onCoursesChange={handleCoursesChange}
+                  onHomeChange={setHome}
+                  adminEnabled={adminMode}
+                  authToken={authToken}
+                />
+              }
               />
               <Route path="/company" element={<Company />} />
               <Route path="*" element={<Dashboard home={home} />} />
@@ -176,4 +192,3 @@ const App: React.FC = () => (
 );
 
 export default App;
-
