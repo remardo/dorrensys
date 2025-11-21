@@ -21,6 +21,8 @@ export interface NewsItem {
   date: string;
   image: string;
   excerpt: string;
+  slug?: string;
+  body?: string[];
 }
 
 export interface Course {

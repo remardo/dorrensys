@@ -22,12 +22,13 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate, adminMode }) => {
   const navItems: NavItem[] = [
     { label: 'Главная', icon: LayoutDashboard, path: '/' },
     { label: 'Новости', icon: Newspaper, path: '/news' },
-    { label: 'Задачи', icon: CheckSquare, path: '/tasks' },
-    { label: 'Обучение', icon: GraduationCap, path: '/lms' },
-    { label: 'Мерч', icon: ShoppingBag, path: '/store' },
-    { label: 'Документы', icon: FileText, path: '/docs' },
-    ...(adminMode ? [{ label: 'Админ', icon: Award, path: '/admin' }] : []),
-  ];
+  { label: 'Задачи', icon: CheckSquare, path: '/tasks' },
+  { label: 'Обучение', icon: GraduationCap, path: '/lms' },
+  { label: 'Мерч', icon: ShoppingBag, path: '/store' },
+  { label: 'Документы', icon: FileText, path: '/docs' },
+  { label: 'Компания', icon: Users, path: '/company' },
+  ...(adminMode ? [{ label: 'Админ', icon: Award, path: '/admin' }] : []),
+];
 
   return (
     <aside className="w-72 bg-dorren-dark text-white flex flex-col h-screen fixed left-0 top-0 border-r border-gray-800 z-50">

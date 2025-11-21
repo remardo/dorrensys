@@ -9,6 +9,7 @@ import News from './components/News';
 import NewsDetail from './components/NewsDetail';
 import Docs from './components/Docs';
 import AdminPanel from './components/AdminPanel';
+import Company from './components/Company';
 import { Search, Bell, Menu } from 'lucide-react';
 import { initialCourses, initialDocs, initialNews } from './data';
 import { Course, DocumentItem, NewsItem } from './types';
@@ -21,6 +22,7 @@ const pageTitles: Record<string, string> = {
   '/store': 'Мерч',
   '/docs': 'Документы',
   '/admin': 'Админ-панель',
+  '/company': 'Компания',
 };
 
 const Layout: React.FC = () => {
@@ -106,6 +108,7 @@ const Layout: React.FC = () => {
                 />
               }
             />
+            <Route path="/company" element={<Company />} />
             <Route path="*" element={<Dashboard />} />
           </Routes>
         </div>
