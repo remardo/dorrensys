@@ -14,6 +14,7 @@ import {
   Paperclip,
   Rows,
   LayoutPanelLeft,
+  Flag,
 } from 'lucide-react';
 
 const EMPLOYEES: User[] = [
@@ -206,6 +207,82 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
           <button className="px-4 py-2 text-red-500 hover:bg-red-50 text-xs uppercase tracking-wider transition-colors">Удалить</button>
           <button onClick={onClose} className="px-6 py-2 bg-dorren-dark text-white hover:bg-dorren-black transition-colors text-xs uppercase tracking-wider font-bold">
             Закрыть
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface NewTaskModalProps {
+  onClose: () => void;
+  onSave: (task: Partial<Task> & { title: string }) => void;
+}
+
+const NewTaskModal: React.FC<NewTaskModalProps> = ({ onClose, onSave }) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [priority, setPriority] = useState<Task['priority']>('medium');
+  const [status, setStatus] = useState<Task['status']>('todo');
+  const [assigneeId, setAssigneeId] = useState<string>('unassigned');
+
+  const handleSubmit = () => {
+    if (!title.trim()) return;
+    const assignee = assigneeId === 'unassigned' ? undefined : EMPLOYEES.find((u) => u.id === assigneeId);
+    onSave({ title: title.trim(), description, priority, status, assignee });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white w-full max-w-xl shadow-2xl border border-gray-100 flex flex-col">
+        <div className="flex justify-between items-center p-6 border-b border-gray-100">
+          <h3 className="text-xl font-semibold text-dorren-black">Новая задача</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-dorren-black transition-colors">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div>
+            <label className="block text-xs uppercase text-gray-500 mb-1">Заголовок</label>
+            <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full border border-gray-200 px-3 py-2 text-sm" placeholder="Например: Подготовить спринт" />
+          </div>
+          <div>
+            <label className="block text-xs uppercase text-gray-500 mb-1">Описание</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} className="w-full border border-gray-200 px-3 py-2 text-sm h-20" placeholder="Краткие шаги или контекст" />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs uppercase text-gray-500 mb-1">Приоритет</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as Task['priority'])} className="w-full border border-gray-200 px-3 py-2 text-sm">
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs uppercase text-gray-500 mb-1">Статус</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value as Task['status'])} className="w-full border border-gray-200 px-3 py-2 text-sm">
+                <option value="todo">К исполнению</option>
+                <option value="in-progress">В работе</option>
+                <option value="done">Готово</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-xs uppercase text-gray-500 mb-1">Исполнитель</label>
+            <select value={assigneeId} onChange={(e) => setAssigneeId(e.target.value)} className="w-full border border-gray-200 px-3 py-2 text-sm">
+              <option value="unassigned">Не назначено</option>
+              {EMPLOYEES.map((emp) => (
+                <option key={emp.id} value={emp.id}>{emp.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <div className="p-4 border-t border-gray-100 flex justify-end gap-3">
+          <button onClick={onClose} className="px-4 py-2 text-xs uppercase tracking-wider text-gray-500 hover:text-dorren-black transition-colors">Отмена</button>
+          <button onClick={handleSubmit} className="px-5 py-2 bg-dorren-dark text-white text-xs uppercase tracking-wider hover:bg-black transition-colors flex items-center gap-1">
+            <Flag size={14} /> Добавить
           </button>
         </div>
       </div>
@@ -462,6 +539,7 @@ const TasksKanban: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
   const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   const handleAssignTask = (taskId: string, user?: User) => {
     setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, assignee: user } : t)));
@@ -558,7 +636,10 @@ const TasksKanban: React.FC = () => {
               <Rows size={14} className="inline mr-1" /> Таблица
             </button>
           </div>
-          <button className="px-6 py-2 bg-dorren-blue text-white hover:bg-dorren-dark transition-colors text-xs uppercase tracking-wider font-bold shadow-sm">
+          <button
+            className="px-6 py-2 bg-dorren-blue text-white hover:bg-dorren-dark transition-colors text-xs uppercase tracking-wider font-bold shadow-sm"
+            onClick={() => setIsNewTaskOpen(true)}
+          >
             Новая задача
           </button>
         </div>
@@ -674,6 +755,23 @@ const TasksKanban: React.FC = () => {
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
           onAssign={handleAssignTask}
+        />
+      )}
+      {isNewTaskOpen && (
+        <NewTaskModal
+          onClose={() => setIsNewTaskOpen(false)}
+          onSave={(payload) => {
+            const newTask: Task = {
+              id: Date.now().toString(),
+              title: payload.title,
+              description: payload.description ?? '',
+              priority: payload.priority ?? 'medium',
+              status: payload.status ?? 'todo',
+              assignee: payload.assignee,
+              createdAt: new Date().toISOString(),
+            };
+            setTasks((prev) => [newTask, ...prev]);
+          }}
         />
       )}
     </div>
