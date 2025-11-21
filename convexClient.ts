@@ -19,10 +19,13 @@ export async function fetchNewsFromConvex(): Promise<NewsItem[] | null> {
   }
 }
 
-export async function pushNewsToConvex(items: NewsItem[]) {
-  if (!convexClient) return;
+export async function pushNewsToConvex(items: NewsItem[], token?: string | null) {
+  if (!convexClient || !token) {
+    if (!token) console.warn('Нет токена Convex, сохраняю только локально');
+    return;
+  }
   try {
-    await convexClient.mutation('news:upsertBulk', { items });
+    await convexClient.mutation('news:upsertBulk', { items, token });
   } catch (err) {
     console.warn('Convex news:upsertBulk failed', err);
   }

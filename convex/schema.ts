@@ -14,4 +14,14 @@ export default defineSchema({
     body: v.optional(v.array(v.string())),
     createdAt: v.number(),
   }).index('by_slug', ['slug']).index('by_id', ['id']),
+  authCodes: defineTable({
+    email: v.string(),
+    code: v.string(),
+    createdAt: v.number(),
+  }).index('by_email', ['email']),
+  sessions: defineTable({
+    email: v.string(),
+    token: v.string(),
+    createdAt: v.number(),
+  }).index('by_token', ['token']).index('by_email', ['email']),
 });
