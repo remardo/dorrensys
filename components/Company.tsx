@@ -34,6 +34,13 @@ const hierarchy = [
   },
 ];
 
+const EMPLOYEES = [
+  { id: 'u1', name: 'Смирнов А.', role: 'Project Manager', email: 'asmirnov@example.com', phone: '+7 999 100-00-01', avatar: 'https://placehold.co/100/100?text=PM' },
+  { id: 'u2', name: 'Егорова Е.', role: 'UX/UI Designer', email: 'egorova@example.com', phone: '+7 999 100-00-02', avatar: 'https://placehold.co/100/100?text=UX' },
+  { id: 'u3', name: 'Котов И.', role: 'Frontend Dev', email: 'ikotov@example.com', phone: '+7 999 100-00-03', avatar: 'https://placehold.co/100/100?text=FE' },
+  { id: 'u4', name: 'Ли В.', role: 'QA Engineer', email: 'vli@example.com', phone: '+7 999 100-00-04', avatar: 'https://placehold.co/100/100?text=QA' },
+];
+
 const Company: React.FC = () => {
   return (
     <div className="animate-fade-in space-y-8">
