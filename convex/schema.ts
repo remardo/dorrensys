@@ -74,7 +74,7 @@ export default defineSchema({
     status: v.string(),
     priority: v.string(),
     createdAt: v.number(),
-  }).index('by_status', ['status']),
+  }).index('by_status', ['status']).index('by_id', ['id']),
   orders: defineTable({
     title: v.string(),
     type: v.string(),

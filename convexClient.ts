@@ -1,5 +1,5 @@
 import { ConvexHttpClient } from 'convex/browser';
-import { Course, DocumentItem, NewsItem } from './types';
+import { Course, DocumentItem, NewsItem, Task } from './types';
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
 
@@ -59,4 +59,28 @@ export async function fetchCoursesFromConvex(): Promise<Course[] | null> {
 export async function pushCoursesToConvex(items: Course[], token?: string | null) {
   if (!convexClient || !token) return;
   await convexClient.mutation('courses:upsertBulk', { items, token });
+}
+
+export async function fetchTasksFromConvex(): Promise<Task[] | null> {
+  if (!convexClient) return null;
+  try {
+    return (await convexClient.query('tasks:list', {})) as Task[];
+  } catch (e) {
+    console.warn('Convex tasks:list failed', e);
+    return null;
+  }
+}
+
+export async function pushTasksToConvex(items: Task[], token?: string | null) {
+  if (!convexClient || !token) return;
+  await convexClient.mutation('tasks:upsertBulk', {
+    token,
+    items: items.map(({ id, title, description, status, priority }) => ({
+      id,
+      title,
+      description: description ?? '',
+      status,
+      priority,
+    })),
+  });
 }

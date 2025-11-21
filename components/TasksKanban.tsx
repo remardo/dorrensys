@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Task, User } from '../types';
+import { fetchTasksFromConvex, pushTasksToConvex } from '../convexClient';
 import {
   Plus,
   MoreHorizontal,
@@ -24,7 +25,7 @@ const EMPLOYEES: User[] = [
   { id: 'u4', name: 'Ли В.', role: 'QA Engineer', avatar: 'https://placehold.co/100/100?random=104', coins: 0 },
 ];
 
-const INITIAL_TASKS: Task[] = [
+const LOCAL_TASKS: Task[] = [
   {
     id: '1',
     title: 'Запустить рассылку по новым OKR',
@@ -532,7 +533,7 @@ const TableView: React.FC<{
 );
 
 const TasksKanban: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>(LOCAL_TASKS);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -586,6 +587,10 @@ const TasksKanban: React.FC = () => {
       }
       return current;
     });
+    pushTasksToConvex(
+      tasks.map((t) => (t.id === taskId ? { ...t, status: toStatus } : t)),
+      localStorage.getItem('convex_token'),
+    );
   };
 
   const handleDragStart = (task: Task) => setDraggingId(task.id);
@@ -771,6 +776,7 @@ const TasksKanban: React.FC = () => {
               createdAt: new Date().toISOString(),
             };
             setTasks((prev) => [newTask, ...prev]);
+            pushTasksToConvex([newTask, ...tasks], localStorage.getItem('convex_token'));
           }}
         />
       )}
@@ -779,3 +785,9 @@ const TasksKanban: React.FC = () => {
 };
 
 export default TasksKanban;
+  // подхватываем задачи из Convex при наличии URL
+  useEffect(() => {
+    fetchTasksFromConvex().then((items) => {
+      if (items && items.length) setTasks(items);
+    });
+  }, []);
