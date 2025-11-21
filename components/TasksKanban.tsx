@@ -1,6 +1,20 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Task, User } from '../types';
-import { Plus, MoreHorizontal, UserPlus, Check, Filter, X, ChevronDown, AlignLeft, Calendar, Clock, Paperclip } from 'lucide-react';
+import {
+  Plus,
+  MoreHorizontal,
+  UserPlus,
+  Check,
+  Filter,
+  X,
+  ChevronDown,
+  AlignLeft,
+  Calendar,
+  Clock,
+  Paperclip,
+  Rows,
+  LayoutPanelLeft,
+} from 'lucide-react';
 
 const EMPLOYEES: User[] = [
   { id: 'u1', name: 'Смирнов А.', role: 'Project Manager', avatar: 'https://placehold.co/100/100?random=101', coins: 0 },
@@ -13,7 +27,7 @@ const INITIAL_TASKS: Task[] = [
   {
     id: '1',
     title: 'Запустить рассылку по новым OKR',
-    description: 'Обновить шаблоны писем для команд, добавить ссылки на Confluence, проверить сегменты.',
+    description: 'Обновить шаблоны писем, добавить ссылки на Confluence, проверить сегменты.',
     status: 'todo',
     priority: 'high',
     assignee: EMPLOYEES[0],
@@ -21,16 +35,16 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: '2',
-    title: 'Обновить документацию по API',
-    description: 'Добавить новые эндпоинты, актуализировать схемы и примеры запросов.',
+    title: 'Обновить документацию API',
+    description: 'Подтащить новые эндпоинты, примеры запросов и схемы.',
     status: 'todo',
     priority: 'medium',
     createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
   },
   {
     id: '3',
-    title: 'Подготовить вакансии Junior Designer',
-    description: 'Согласовать требования, собрать материалы для карьерной страницы, настроить отклики.',
+    title: 'Подготовить описание вакансии Junior Designer',
+    description: 'Согласовать требования, собрать материалы для страницы, настроить отклики.',
     status: 'in-progress',
     priority: 'high',
     assignee: EMPLOYEES[1],
@@ -39,7 +53,7 @@ const INITIAL_TASKS: Task[] = [
   {
     id: '4',
     title: 'Финализировать макеты лендинга',
-    description: 'Собрать отзывы по цветам и иллюстрациям, обновить гайдлайны по брендбуку.',
+    description: 'Учесть правки по иллюстрациям и цвету, проверить адаптив.',
     status: 'in-progress',
     priority: 'low',
     assignee: EMPLOYEES[2],
@@ -47,8 +61,8 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: '5',
-    title: 'Починить отчёт по маркетингу',
-    description: 'Проверить выгрузки, пофиксить фильтры и дубли в таблицах.',
+    title: 'Починить отчёт по marketing',
+    description: 'Проверить выгрузки, фильтры и дубли.',
     status: 'done',
     priority: 'medium',
     createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
@@ -57,10 +71,8 @@ const INITIAL_TASKS: Task[] = [
 
 const isNewTask = (dateString?: string) => {
   if (!dateString) return false;
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-  return diffInHours < 24;
+  const diffHours = (Date.now() - new Date(dateString).getTime()) / (1000 * 60 * 60);
+  return diffHours < 24;
 };
 
 interface TaskDetailsModalProps {
@@ -71,7 +83,6 @@ interface TaskDetailsModalProps {
 
 const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAssign }) => {
   const [isAssignDropdownOpen, setIsAssignDropdownOpen] = useState(false);
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
       <div className="bg-white w-full max-w-3xl shadow-2xl border border-gray-100 flex flex-col max-h-[90vh]">
@@ -110,7 +121,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
                 <AlignLeft size={16} className="mr-2 text-dorren-blue" /> Описание
               </h3>
               <div className="text-sm text-gray-600 leading-relaxed font-light whitespace-pre-wrap">
-                {task.description ? <p>{task.description}</p> : <p className="text-gray-400 italic">Описание отсутствует...</p>}
+                {task.description ? <p>{task.description}</p> : <p className="text-gray-400 italic">Нет описания…</p>}
               </div>
             </div>
 
@@ -119,7 +130,7 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
                 <Paperclip size={16} className="mr-2 text-dorren-blue" /> Вложения
               </h3>
               <div className="bg-gray-50 border border-dashed border-gray-300 p-8 text-center text-gray-400 text-xs uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors">
-                Перетащите файлы
+                Перетащите файлы сюда
               </div>
             </div>
           </div>
@@ -127,17 +138,11 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
           <div className="w-full md:w-64 space-y-6 border-l border-gray-100 pl-0 md:pl-8">
             <div>
               <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-2">Статус</span>
-              <div className="relative">
-                <select
-                  disabled
-                  className="w-full appearance-none bg-gray-50 border border-gray-200 text-xs uppercase tracking-wider px-3 py-2 pr-8 rounded-sm text-dorren-black cursor-not-allowed opacity-70"
-                  value={task.status}
-                >
-                  <option value="todo">К исполнению</option>
-                  <option value="in-progress">В работе</option>
-                  <option value="done">Готово</option>
-                </select>
-              </div>
+              <select value={task.status} disabled className="w-full bg-gray-50 border border-gray-200 text-xs uppercase tracking-wider px-3 py-2 rounded-sm text-dorren-black cursor-not-allowed opacity-70">
+                <option value="todo">К исполнению</option>
+                <option value="in-progress">В работе</option>
+                <option value="done">Готово</option>
+              </select>
             </div>
 
             <div className="relative">
@@ -161,7 +166,6 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
                 )}
                 <ChevronDown size={14} className="ml-auto text-gray-400" />
               </div>
-
               {isAssignDropdownOpen && (
                 <div className="absolute top-full left-0 w-full mt-1 bg-white shadow-xl border border-gray-100 z-10 max-h-48 overflow-y-auto custom-scrollbar">
                   {EMPLOYEES.map((user) => (
@@ -193,17 +197,13 @@ const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ task, onClose, onAs
 
             <div>
               <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-2">Создано</span>
-              <div className="text-xs text-dorren-black">
-                {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '-'}
-              </div>
+              <div className="text-xs text-dorren-black">{task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '-'}</div>
             </div>
           </div>
         </div>
 
         <div className="p-6 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-          <button className="px-4 py-2 text-red-500 hover:bg-red-50 text-xs uppercase tracking-wider transition-colors">
-            Удалить
-          </button>
+          <button className="px-4 py-2 text-red-500 hover:bg-red-50 text-xs uppercase tracking-wider transition-colors">Удалить</button>
           <button onClick={onClose} className="px-6 py-2 bg-dorren-dark text-white hover:bg-dorren-black transition-colors text-xs uppercase tracking-wider font-bold">
             Закрыть
           </button>
@@ -217,14 +217,21 @@ interface TaskCardProps {
   task: Task;
   onAssign: (taskId: string, user: User) => void;
   onClick: (task: Task) => void;
+  onDragStart: (task: Task) => void;
+  onDragOverCard: (task: Task, e: React.DragEvent) => void;
+  onDropCard: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onAssign, onClick }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onAssign, onClick, onDragStart, onDragOverCard, onDropCard }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const isNew = isNewTask(task.createdAt);
 
   return (
     <div
+      draggable
+      onDragStart={() => onDragStart(task)}
+      onDragOver={(e) => onDragOverCard(task, e)}
+      onDrop={() => onDropCard(task)}
       onClick={() => onClick(task)}
       className="bg-white p-4 border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group border-l-4 border-l-transparent hover:border-l-dorren-blue relative overflow-hidden"
     >
@@ -334,13 +341,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onAssign, onClick }) => {
 interface ColumnProps {
   title: string;
   tasks: Task[];
-  status: string;
+  status: Task['status'];
   onAssign: (taskId: string, user: User) => void;
   onTaskClick: (task: Task) => void;
+  onDragStart: (task: Task) => void;
+  onDropToColumn: (status: Task['status']) => void;
+  onDragOverCard: (task: Task, e: React.DragEvent) => void;
+  onDropCard: (task: Task) => void;
 }
 
-const Column: React.FC<ColumnProps> = ({ title, tasks, status, onAssign, onTaskClick }) => (
-  <div className="flex-1 min-w-[300px] flex flex-col h-full">
+const Column: React.FC<ColumnProps> = ({
+  title,
+  tasks,
+  status,
+  onAssign,
+  onTaskClick,
+  onDragStart,
+  onDropToColumn,
+  onDragOverCard,
+  onDropCard,
+}) => (
+  <div
+    className="flex-1 min-w-[300px] flex flex-col h-full"
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={() => onDropToColumn(status)}
+  >
     <div className="flex items-center mb-4 pb-2 border-b-2 border-dorren-black/10">
       <h3 className="text-sm font-bold uppercase tracking-brand text-dorren-black">
         {title} <span className="text-gray-400 font-normal ml-1">({tasks.length})</span>
@@ -348,12 +373,84 @@ const Column: React.FC<ColumnProps> = ({ title, tasks, status, onAssign, onTaskC
     </div>
     <div className="space-y-3 overflow-y-auto pr-2 flex-1 custom-scrollbar">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} onAssign={onAssign} onClick={onTaskClick} />
+        <TaskCard
+          key={task.id}
+          task={task}
+          onAssign={onAssign}
+          onClick={onTaskClick}
+          onDragStart={onDragStart}
+          onDragOverCard={onDragOverCard}
+          onDropCard={onDropCard}
+        />
       ))}
       <button className="w-full py-3 border border-dashed border-gray-300 text-gray-400 text-xs uppercase tracking-wider hover:border-dorren-blue hover:text-dorren-blue hover:bg-dorren-blue/5 transition-all flex items-center justify-center rounded-sm">
         <Plus size={14} className="mr-2" /> Добавить задачу
       </button>
     </div>
+  </div>
+);
+
+const TableView: React.FC<{
+  tasks: Task[];
+  onAssign: (taskId: string, user: User) => void;
+  onStatusChange: (taskId: string, status: Task['status']) => void;
+  onOpen: (task: Task) => void;
+}> = ({ tasks, onAssign, onStatusChange, onOpen }) => (
+  <div className="bg-white border border-gray-100 shadow-sm overflow-x-auto">
+    <table className="min-w-full text-sm">
+      <thead className="bg-gray-50 border-b border-gray-100 text-left text-xs uppercase tracking-wider text-gray-500">
+        <tr>
+          <th className="px-4 py-2">Задача</th>
+          <th className="px-4 py-2">Статус</th>
+          <th className="px-4 py-2">Приоритет</th>
+          <th className="px-4 py-2">Исполнитель</th>
+          <th className="px-4 py-2">Создано</th>
+        </tr>
+      </thead>
+      <tbody>
+        {tasks.map((task) => (
+          <tr key={task.id} className="border-b border-gray-50 hover:bg-gray-50">
+            <td className="px-4 py-3">
+              <button className="text-dorren-dark hover:text-dorren-blue font-medium" onClick={() => onOpen(task)}>
+                {task.title}
+              </button>
+              {task.description && <p className="text-xs text-gray-500 line-clamp-1">{task.description}</p>}
+            </td>
+            <td className="px-4 py-3">
+              <select
+                className="text-xs border border-gray-200 px-2 py-1"
+                value={task.status}
+                onChange={(e) => onStatusChange(task.id, e.target.value as Task['status'])}
+              >
+                <option value="todo">К исполнению</option>
+                <option value="in-progress">В работе</option>
+                <option value="done">Готово</option>
+              </select>
+            </td>
+            <td className="px-4 py-3 text-xs capitalize">{task.priority}</td>
+            <td className="px-4 py-3 text-xs">
+              <div className="flex items-center gap-2">
+                <img src={task.assignee?.avatar ?? 'https://placehold.co/40'} alt={task.assignee?.name ?? 'NA'} className="w-6 h-6 rounded-full object-cover" />
+                <select
+                  className="border border-gray-200 text-xs px-2 py-1"
+                  value={task.assignee?.id ?? 'unassigned'}
+                  onChange={(e) => {
+                    const user = EMPLOYEES.find((u) => u.id === e.target.value);
+                    onAssign(task.id, user as User);
+                  }}
+                >
+                  <option value="unassigned">Не назначено</option>
+                  {EMPLOYEES.map((u) => (
+                    <option key={u.id} value={u.id}>{u.name}</option>
+                  ))}
+                </select>
+              </div>
+            </td>
+            <td className="px-4 py-3 text-xs text-gray-500">{task.createdAt ? new Date(task.createdAt).toLocaleDateString() : '-'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   </div>
 );
 
@@ -363,12 +460,13 @@ const TasksKanban: React.FC = () => {
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>('kanban');
+  const [draggingId, setDraggingId] = useState<string | null>(null);
 
-  const handleAssignTask = (taskId: string, user: User) => {
-    const updatedTasks = tasks.map((t) => (t.id === taskId ? { ...t, assignee: user } : t));
-    setTasks(updatedTasks);
+  const handleAssignTask = (taskId: string, user?: User) => {
+    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, assignee: user } : t)));
     if (selectedTask && selectedTask.id === taskId) {
-      setSelectedTask({ ...selectedTask, assignee: user });
+      setSelectedTask(user ? { ...selectedTask, assignee: user } : { ...selectedTask, assignee: undefined });
     }
   };
 
@@ -386,23 +484,52 @@ const TasksKanban: React.FC = () => {
         return false;
       }
     }
-    if (filterPriority !== 'all' && task.priority !== filterPriority) {
-      return false;
-    }
-    if (filterStatus !== 'all' && task.status !== filterStatus) {
-      return false;
-    }
+    if (filterPriority !== 'all' && task.priority !== filterPriority) return false;
+    if (filterStatus !== 'all' && task.status !== filterStatus) return false;
     return true;
   });
+
+  const moveTask = (taskId: string, toStatus: Task['status'], beforeId?: string) => {
+    setTasks((prev) => {
+      const current = [...prev];
+      const idx = current.findIndex((t) => t.id === taskId);
+      if (idx === -1) return prev;
+      const [task] = current.splice(idx, 1);
+      const updatedTask = { ...task, status: toStatus };
+      if (beforeId) {
+        const insertIndex = current.findIndex((t) => t.id === beforeId);
+        if (insertIndex >= 0) {
+          current.splice(insertIndex, 0, updatedTask);
+        } else {
+          current.push(updatedTask);
+        }
+      } else {
+        current.push(updatedTask);
+      }
+      return current;
+    });
+  };
+
+  const handleDragStart = (task: Task) => setDraggingId(task.id);
+  const handleDropToColumn = (status: Task['status']) => {
+    if (!draggingId) return;
+    moveTask(draggingId, status);
+    setDraggingId(null);
+  };
+  const handleDropOnCard = (targetTask: Task) => {
+    if (!draggingId || draggingId === targetTask.id) return;
+    moveTask(draggingId, targetTask.status, targetTask.id);
+    setDraggingId(null);
+  };
 
   return (
     <div className="animate-fade-in h-full flex flex-col">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h2 className="text-3xl font-light text-dorren-black uppercase tracking-widest mb-2">Задачи</h2>
-          <p className="text-gray-500 font-light text-sm">Управляйте задачами и назначайте исполнителей.</p>
+          <p className="text-gray-500 font-light text-sm">Перетаскивайте карточки или переключайтесь в табличный вид.</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           <div className="flex -space-x-2 mr-4 items-center">
             {EMPLOYEES.map((emp) => (
               <img
@@ -416,6 +543,20 @@ const TasksKanban: React.FC = () => {
             <div className="w-8 h-8 rounded-full border-2 border-[#F9FAFB] bg-gray-200 flex items-center justify-center text-[10px] text-gray-500 font-bold">
               +4
             </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wider">
+            <button
+              className={`px-3 py-2 border ${viewMode === 'kanban' ? 'bg-dorren-dark text-white border-dorren-dark' : 'border-gray-200 text-dorren-dark'}`}
+              onClick={() => setViewMode('kanban')}
+            >
+              <LayoutPanelLeft size={14} className="inline mr-1" /> Канбан
+            </button>
+            <button
+              className={`px-3 py-2 border ${viewMode === 'table' ? 'bg-dorren-dark text-white border-dorren-dark' : 'border-gray-200 text-dorren-dark'}`}
+              onClick={() => setViewMode('table')}
+            >
+              <Rows size={14} className="inline mr-1" /> Таблица
+            </button>
           </div>
           <button className="px-6 py-2 bg-dorren-blue text-white hover:bg-dorren-dark transition-colors text-xs uppercase tracking-wider font-bold shadow-sm">
             Новая задача
@@ -483,29 +624,50 @@ const TasksKanban: React.FC = () => {
         )}
       </div>
 
-      <div className="flex gap-6 overflow-x-auto pb-4 h-full items-stretch">
-        <Column
-          title="К исполнению"
-          tasks={filteredTasks.filter((t) => t.status === 'todo')}
-          status="todo"
+      {viewMode === 'kanban' ? (
+        <div className="flex gap-6 overflow-x-auto pb-4 h-full items-stretch">
+          <Column
+            title="К исполнению"
+            tasks={filteredTasks.filter((t) => t.status === 'todo')}
+            status="todo"
+            onAssign={handleAssignTask}
+            onTaskClick={setSelectedTask}
+            onDragStart={handleDragStart}
+            onDropToColumn={handleDropToColumn}
+            onDragOverCard={(task, e) => e.preventDefault()}
+            onDropCard={handleDropOnCard}
+          />
+          <Column
+            title="В работе"
+            tasks={filteredTasks.filter((t) => t.status === 'in-progress')}
+            status="in-progress"
+            onAssign={handleAssignTask}
+            onTaskClick={setSelectedTask}
+            onDragStart={handleDragStart}
+            onDropToColumn={handleDropToColumn}
+            onDragOverCard={(task, e) => e.preventDefault()}
+            onDropCard={handleDropOnCard}
+          />
+          <Column
+            title="Готово"
+            tasks={filteredTasks.filter((t) => t.status === 'done')}
+            status="done"
+            onAssign={handleAssignTask}
+            onTaskClick={setSelectedTask}
+            onDragStart={handleDragStart}
+            onDropToColumn={handleDropToColumn}
+            onDragOverCard={(task, e) => e.preventDefault()}
+            onDropCard={handleDropOnCard}
+          />
+        </div>
+      ) : (
+        <TableView
+          tasks={filteredTasks}
           onAssign={handleAssignTask}
-          onTaskClick={setSelectedTask}
+          onStatusChange={(id, status) => moveTask(id, status)}
+          onOpen={setSelectedTask}
         />
-        <Column
-          title="В работе"
-          tasks={filteredTasks.filter((t) => t.status === 'in-progress')}
-          status="in-progress"
-          onAssign={handleAssignTask}
-          onTaskClick={setSelectedTask}
-        />
-        <Column
-          title="Готово"
-          tasks={filteredTasks.filter((t) => t.status === 'done')}
-          status="done"
-          onAssign={handleAssignTask}
-          onTaskClick={setSelectedTask}
-        />
-      </div>
+      )}
 
       {selectedTask && (
         <TaskDetailsModal
