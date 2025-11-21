@@ -17,7 +17,7 @@ const newsData: NewsItem[] = [
     title: 'Новая система целей и метрик по командам',
     category: 'HR аналитика',
     date: '12 янв',
-    image: 'https://picsum.photos/800/400?random=1',
+    image: 'https://placehold.co/800/400?random=1',
     excerpt: 'Запускаем регулярные OKR и прозрачные KPI для всех продуктовых групп.',
   },
   {
@@ -25,7 +25,7 @@ const newsData: NewsItem[] = [
     title: 'Дорожная карта Q1: фокус на AI‑интеграциях',
     category: 'Продукт',
     date: '10 янв',
-    image: 'https://picsum.photos/800/400?random=2',
+    image: 'https://placehold.co/800/400?random=2',
     excerpt: 'Улучшаем обработку заявок и отчётность через LLM‑модули.',
   },
   {
@@ -33,7 +33,7 @@ const newsData: NewsItem[] = [
     title: 'Мероприятия по бренду работодателя',
     category: 'HR',
     date: '05 янв',
-    image: 'https://picsum.photos/800/400?random=3',
+    image: 'https://placehold.co/800/400?random=3',
     excerpt: 'Календарь встреч для кандидатов и свежие материалы про компанию.',
   },
 ];

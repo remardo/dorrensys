@@ -40,7 +40,7 @@ const emptyCourse = (): Course => ({
   description: '',
   progress: 0,
   totalModules: 0,
-  thumbnail: 'https://picsum.photos/600/400',
+  thumbnail: 'https://placehold.co/600/400',
   duration: '0 min',
   badge: 'Draft',
   modules: [],

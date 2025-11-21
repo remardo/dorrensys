@@ -3,10 +3,10 @@ import { Task, User } from '../types';
 import { Plus, MoreHorizontal, UserPlus, Check, Filter, X, ChevronDown, AlignLeft, Calendar, Clock, Paperclip } from 'lucide-react';
 
 const EMPLOYEES: User[] = [
-  { id: 'u1', name: 'Смирнов А.', role: 'Project Manager', avatar: 'https://picsum.photos/100/100?random=101', coins: 0 },
-  { id: 'u2', name: 'Егорова Е.', role: 'UX/UI Designer', avatar: 'https://picsum.photos/100/100?random=102', coins: 0 },
-  { id: 'u3', name: 'Котов И.', role: 'Frontend Dev', avatar: 'https://picsum.photos/100/100?random=103', coins: 0 },
-  { id: 'u4', name: 'Ли В.', role: 'QA Engineer', avatar: 'https://picsum.photos/100/100?random=104', coins: 0 },
+  { id: 'u1', name: 'Смирнов А.', role: 'Project Manager', avatar: 'https://placehold.co/100/100?random=101', coins: 0 },
+  { id: 'u2', name: 'Егорова Е.', role: 'UX/UI Designer', avatar: 'https://placehold.co/100/100?random=102', coins: 0 },
+  { id: 'u3', name: 'Котов И.', role: 'Frontend Dev', avatar: 'https://placehold.co/100/100?random=103', coins: 0 },
+  { id: 'u4', name: 'Ли В.', role: 'QA Engineer', avatar: 'https://placehold.co/100/100?random=104', coins: 0 },
 ];
 
 const INITIAL_TASKS: Task[] = [

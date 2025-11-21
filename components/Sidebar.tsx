@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onNavigate, adminMode }) => {
       <div className="p-6 border-t border-gray-700 bg-black/20">
         <div className="flex items-center">
           <img
-            src="https://picsum.photos/100/100"
+            src="https://placehold.co/100/100"
             alt="User"
             className="w-10 h-10 rounded-full border border-gray-600 object-cover"
           />

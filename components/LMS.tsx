@@ -10,8 +10,8 @@ interface LMSProps {
 }
 
 const employees: User[] = [
-  { id: 'u1', name: 'Смирнов Андрей', role: 'Руководитель направления', avatar: 'https://picsum.photos/100/100?random=51', coins: 0 },
-  { id: 'u2', name: 'Егорова Елена', role: 'HR BP', avatar: 'https://picsum.photos/100/100?random=52', coins: 0 },
+  { id: 'u1', name: 'Смирнов Андрей', role: 'Руководитель направления', avatar: 'https://placehold.co/100/100?random=51', coins: 0 },
+  { id: 'u2', name: 'Егорова Елена', role: 'HR BP', avatar: 'https://placehold.co/100/100?random=52', coins: 0 },
 ];
 
 const ModuleIcon: React.FC<{ type: ModuleKind }> = ({ type }) => {

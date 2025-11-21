@@ -3,12 +3,12 @@ import { Product } from '../types';
 import { ShoppingBag } from 'lucide-react';
 
 const products: Product[] = [
-  { id: 1, name: 'Толстовка с логотипом', price: 500, category: 'Одежда', image: 'https://picsum.photos/400/400?random=10' },
-  { id: 2, name: 'Кружка Dorren', price: 1200, category: 'Офис', image: 'https://picsum.photos/400/400?random=11' },
-  { id: 3, name: 'Набор наклеек', price: 250, category: 'Сувениры', image: 'https://picsum.photos/400/400?random=12' },
-  { id: 4, name: 'Ручка с гравировкой', price: 150, category: 'Офис', image: 'https://picsum.photos/400/400?random=13' },
-  { id: 5, name: 'Многоразовая бутылка', price: 100, category: 'ЗОЖ', image: 'https://picsum.photos/400/400?random=14' },
-  { id: 6, name: 'Бейсболка', price: 450, category: 'Одежда', image: 'https://picsum.photos/400/400?random=15' },
+  { id: 1, name: 'Толстовка с логотипом', price: 500, category: 'Одежда', image: 'https://placehold.co/400/400?random=10' },
+  { id: 2, name: 'Кружка Dorren', price: 1200, category: 'Офис', image: 'https://placehold.co/400/400?random=11' },
+  { id: 3, name: 'Набор наклеек', price: 250, category: 'Сувениры', image: 'https://placehold.co/400/400?random=12' },
+  { id: 4, name: 'Ручка с гравировкой', price: 150, category: 'Офис', image: 'https://placehold.co/400/400?random=13' },
+  { id: 5, name: 'Многоразовая бутылка', price: 100, category: 'ЗОЖ', image: 'https://placehold.co/400/400?random=14' },
+  { id: 6, name: 'Бейсболка', price: 450, category: 'Одежда', image: 'https://placehold.co/400/400?random=15' },
 ];
 
 const MerchStore: React.FC = () => {
