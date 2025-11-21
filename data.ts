@@ -1,4 +1,4 @@
-import { Course, DocumentItem, NewsItem } from './types';
+import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
 
 export const initialNews: NewsItem[] = [
   {
@@ -73,6 +73,41 @@ export const initialDocs: DocumentItem[] = [
     link: '#',
   },
 ];
+
+export const initialHome: HomeConfig = {
+  hero: {
+    title: 'Соединяя берега',
+    subtitle: 'Новый мост через Обь в Новосибирске; работы завершатся в 2023. Платный проезд — 100 рублей. Подробнее в проекте.',
+    date: '21.03.2022',
+    image: 'https://placehold.co/900x600/1d3557/ffffff?text=Dorren+Project',
+    ctaText: 'Подробнее',
+    ctaLink: '/news/okr-and-kpi-launch',
+  },
+  tiles: [
+    { title: 'Новый опрос', description: 'Оценка удовлетворенности персонала', cta: 'Пройти опрос', link: '/survey', variant: 'secondary' },
+    { title: 'Новый курс', description: 'Курс молодого бойца', cta: 'Пройти', link: '/lms', variant: 'secondary' },
+    { title: '13:43 · Среда, 3 марта', description: 'Перейти в календарь', cta: 'К календарю', link: '/calendar', variant: 'primary' },
+  ],
+  notifications: [
+    '10 новых писем',
+    'Ответ в опросе — 13 июня, 10:22',
+    'Вы записаны на мероприятие — 10 июля, 11:15',
+    'Новый комментарий',
+  ],
+  tasks: [
+    { id: 1, title: 'Заполнить отпускной график', time: '15 июня, 13:00', status: 'pending' },
+    { id: 2, title: 'Запись на медосмотр', time: '17 июня, 09:00', status: 'pending' },
+    { id: 3, title: 'Созвон по проекту CRM', time: 'Сегодня, 16:30', status: 'done' },
+  ],
+  events: [
+    { title: 'Воркшоп по аналитике', date: '13 сент.', place: 'Учебный класс', cta: 'Записаться' },
+    { title: 'Демо новых фич', date: '20 сент.', place: 'Онлайн', cta: 'Добавить в календарь' },
+  ],
+  orders: [
+    { title: 'Список партнёров', type: 'DOCX', size: '12.9 Kb' },
+    { title: 'Схема мотивации', type: 'XLSX', size: '181 Kb' },
+  ],
+};
 
 export const initialCourses: Course[] = [
   {

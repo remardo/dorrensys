@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Course, CourseModule, DocumentItem, ModuleKind, NewsItem, Quiz, QuizQuestion } from '../types';
 import { Save, AlertTriangle, Plus, Trash, GripVertical, Upload, Image as ImageIcon, Layers, FileText, BookOpen, HelpCircle } from 'lucide-react';
 
-type TabKey = 'news' | 'docs' | 'courses';
+type TabKey = 'news' | 'docs' | 'courses' | 'home';
 
 interface AdminPanelProps {
   news: NewsItem[];
@@ -11,6 +11,8 @@ interface AdminPanelProps {
   onNewsChange: (items: NewsItem[]) => void;
   onDocsChange: (items: DocumentItem[]) => void;
   onCoursesChange: (items: Course[]) => void;
+  home: any;
+  onHomeChange: (config: any) => void;
   adminEnabled: boolean;
 }
 
@@ -98,11 +100,12 @@ const ListCard: React.FC<{
   </div>
 );
 
-const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, onNewsChange, onDocsChange, onCoursesChange, adminEnabled }) => {
+const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, home, onNewsChange, onDocsChange, onCoursesChange, onHomeChange, adminEnabled }) => {
   const [tab, setTab] = useState<TabKey>('news');
   const [newsList, setNewsList] = useState(news);
   const [docsList, setDocsList] = useState(docs);
   const [courseList, setCourseList] = useState(courses);
+  const [homeConfig, setHomeConfig] = useState(home);
 
   const [selectedNewsId, setSelectedNewsId] = useState<number | null>(news[0]?.id ?? null);
   const [selectedDocId, setSelectedDocId] = useState<number | null>(docs[0]?.id ?? null);
@@ -116,6 +119,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, onNewsChan
   useEffect(() => setNewsList(news), [news]);
   useEffect(() => setDocsList(docs), [docs]);
   useEffect(() => setCourseList(courses), [courses]);
+  useEffect(() => setHomeConfig(home), [home]);
 
   const newsCategories = useMemo(() => ['All', ...new Set(newsList.map((n) => n.category))], [newsList]);
   const docCategories = useMemo(() => ['All', ...new Set(docsList.map((d) => d.category))], [docsList]);
@@ -131,6 +135,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, onNewsChan
       onNewsChange(newsList);
       onDocsChange(docsList);
       onCoursesChange(courseList);
+      onHomeChange(homeConfig);
     } catch (e) {
       setError('Save failed. Check data format.');
     }
@@ -552,6 +557,151 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, onNewsChan
     </div>
   );
 
+  const homeEditor = (
+    <div className="space-y-6">
+      <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-3">
+        <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Hero-блок</h4>
+        <div className="grid md:grid-cols-2 gap-3">
+          <Field label="Заголовок">
+            <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={homeConfig.hero?.title ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, title: e.target.value } })} />
+          </Field>
+          <Field label="Дата">
+            <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={homeConfig.hero?.date ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, date: e.target.value } })} />
+          </Field>
+          <Field label="Подзаголовок">
+            <textarea className="w-full border border-gray-200 px-3 py-2 text-sm h-16" value={homeConfig.hero?.subtitle ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, subtitle: e.target.value } })} />
+          </Field>
+          <Field label="Изображение (URL)">
+            <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={homeConfig.hero?.image ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, image: e.target.value } })} />
+          </Field>
+          <Field label="CTA текст">
+            <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={homeConfig.hero?.ctaText ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, ctaText: e.target.value } })} />
+          </Field>
+          <Field label="CTA ссылка">
+            <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={homeConfig.hero?.ctaLink ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, hero: { ...homeConfig.hero, ctaLink: e.target.value } })} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Верхние плитки</h4>
+          <button className="text-xs uppercase tracking-wider text-dorren-dark flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, tiles: [...homeConfig.tiles, { title: 'Новая плитка', description: '', cta: '', link: '', variant: 'secondary' }] })}>
+            <Plus size={14} /> Добавить
+          </button>
+        </div>
+        <div className="grid md:grid-cols-2 gap-3">
+          {homeConfig.tiles.map((tile: any, idx: number) => (
+            <div key={idx} className="border border-gray-200 p-3">
+              <Field label="Заголовок">
+                <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={tile.title} onChange={(e) => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.map((t: any, i: number) => i === idx ? { ...t, title: e.target.value } : t) })} />
+              </Field>
+              <Field label="Описание">
+                <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={tile.description} onChange={(e) => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.map((t: any, i: number) => i === idx ? { ...t, description: e.target.value } : t) })} />
+              </Field>
+              <Field label="CTA">
+                <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={tile.cta ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.map((t: any, i: number) => i === idx ? { ...t, cta: e.target.value } : t) })} />
+              </Field>
+              <Field label="Ссылка">
+                <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={tile.link ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.map((t: any, i: number) => i === idx ? { ...t, link: e.target.value } : t) })} />
+              </Field>
+              <Field label="Вариант (primary/secondary)">
+                <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={tile.variant ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.map((t: any, i: number) => i === idx ? { ...t, variant: e.target.value } : t) })} />
+              </Field>
+              <div className="flex justify-end">
+                <button className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, tiles: homeConfig.tiles.filter((_: any, i: number) => i !== idx) })}>
+                  <Trash size={12} /> Удалить
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Уведомления</h4>
+            <button className="text-xs text-dorren-dark flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, notifications: [...homeConfig.notifications, 'Новое уведомление'] })}>
+              <Plus size={14} /> Добавить
+            </button>
+          </div>
+          {homeConfig.notifications.map((n: string, idx: number) => (
+            <div key={idx} className="flex gap-2 items-center">
+              <input className="flex-1 border border-gray-200 px-3 py-2 text-sm" value={n} onChange={(e) => setHomeConfig({ ...homeConfig, notifications: homeConfig.notifications.map((v: string, i: number) => i === idx ? e.target.value : v) })} />
+              <button className="text-red-500 hover:text-red-700" onClick={() => setHomeConfig({ ...homeConfig, notifications: homeConfig.notifications.filter((_: string, i: number) => i !== idx) })}>
+                <Trash size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Задачи</h4>
+            <button className="text-xs text-dorren-dark flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, tasks: [...homeConfig.tasks, { id: Date.now(), title: 'Новая задача', time: '', status: 'pending' }] })}>
+              <Plus size={14} /> Добавить
+            </button>
+          </div>
+          {homeConfig.tasks.map((t: any, idx: number) => (
+            <div key={t.id} className="grid grid-cols-3 gap-2 items-center">
+              <input className="col-span-2 border border-gray-200 px-3 py-2 text-sm" value={t.title} onChange={(e) => setHomeConfig({ ...homeConfig, tasks: homeConfig.tasks.map((task: any, i: number) => i === idx ? { ...task, title: e.target.value } : task) })} />
+              <input className="border border-gray-200 px-3 py-2 text-sm" value={t.time} onChange={(e) => setHomeConfig({ ...homeConfig, tasks: homeConfig.tasks.map((task: any, i: number) => i === idx ? { ...task, time: e.target.value } : task) })} />
+              <select className="border border-gray-200 px-3 py-2 text-sm col-span-2" value={t.status} onChange={(e) => setHomeConfig({ ...homeConfig, tasks: homeConfig.tasks.map((task: any, i: number) => i === idx ? { ...task, status: e.target.value } : task) })}>
+                <option value="pending">pending</option>
+                <option value="done">done</option>
+              </select>
+              <button className="text-red-500 hover:text-red-700 text-xs" onClick={() => setHomeConfig({ ...homeConfig, tasks: homeConfig.tasks.filter((_: any, i: number) => i !== idx) })}>
+                Удалить
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">События</h4>
+            <button className="text-xs text-dorren-dark flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, events: [...homeConfig.events, { title: 'Новое событие', date: '', place: '', cta: '' }] })}>
+              <Plus size={14} /> Добавить
+            </button>
+          </div>
+          {homeConfig.events.map((ev: any, idx: number) => (
+            <div key={idx} className="grid grid-cols-3 gap-2 items-center">
+              <input className="col-span-2 border border-gray-200 px-3 py-2 text-sm" value={ev.title} onChange={(e) => setHomeConfig({ ...homeConfig, events: homeConfig.events.map((v: any, i: number) => i === idx ? { ...v, title: e.target.value } : v) })} />
+              <input className="border border-gray-200 px-3 py-2 text-sm" value={ev.date} onChange={(e) => setHomeConfig({ ...homeConfig, events: homeConfig.events.map((v: any, i: number) => i === idx ? { ...v, date: e.target.value } : v) })} />
+              <input className="border border-gray-200 px-3 py-2 text-sm" value={ev.place} onChange={(e) => setHomeConfig({ ...homeConfig, events: homeConfig.events.map((v: any, i: number) => i === idx ? { ...v, place: e.target.value } : v) })} />
+              <input className="col-span-2 border border-gray-200 px-3 py-2 text-sm" value={ev.cta ?? ''} onChange={(e) => setHomeConfig({ ...homeConfig, events: homeConfig.events.map((v: any, i: number) => i === idx ? { ...v, cta: e.target.value } : v) })} />
+              <button className="text-red-500 hover:text-red-700 text-xs" onClick={() => setHomeConfig({ ...homeConfig, events: homeConfig.events.filter((_: any, i: number) => i !== idx) })}>
+                Удалить
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white border border-gray-100 p-4 shadow-sm space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Приказы</h4>
+            <button className="text-xs text-dorрен-dark flex items-center gap-1" onClick={() => setHomeConfig({ ...homeConfig, orders: [...homeConfig.orders, { title: 'Новый приказ', type: 'DOC', size: '' }] })}>
+              <Plus size={14} /> Добавить
+            </button>
+          </div>
+          {homeConfig.orders.map((o: any, idx: number) => (
+            <div key={idx} className="grid grid-cols-3 gap-2 items-center">
+              <input className="col-span-2 border border-gray-200 px-3 py-2 text-sm" value={o.title} onChange={(e) => setHomeConfig({ ...homeConfig, orders: homeConfig.orders.map((v: any, i: number) => i === idx ? { ...v, title: e.target.value } : v) })} />
+              <input className="border border-gray-200 px-3 py-2 text-sm" value={o.type} onChange={(e) => setHomeConfig({ ...homeConfig, orders: homeConfig.orders.map((v: any, i: number) => i === idx ? { ...v, type: e.target.value } : v) })} />
+              <input className="border border-gray-200 px-3 py-2 text-sm" value={o.size} onChange={(e) => setHomeConfig({ ...homeConfig, orders: homeConfig.orders.map((v: any, i: number) => i === idx ? { ...v, size: e.target.value } : v) })} />
+              <button className="text-red-500 hover:text-red-700 text-xs" onClick={() => setHomeConfig({ ...homeConfig, orders: homeConfig.orders.filter((_: any, i: number) => i !== idx) })}>
+                Удалить
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   if (!adminEnabled) return <div className="p-6 bg-white border border-gray-200 text-sm text-gray-500">Turn admin mode ON in header to edit content.</div>;
 
   return (
@@ -576,11 +726,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ news, docs, courses, onNewsChan
         <button className={`px-3 py-2 border ${tab === 'news' ? 'border-dorren-dark bg-dorren-dark text-white' : 'border-gray-200 text-dorren-dark hover:border-dorren-dark'}`} onClick={() => setTab('news')}>News</button>
         <button className={`px-3 py-2 border ${tab === 'docs' ? 'border-dorren-dark bg-dorren-dark text-white' : 'border-gray-200 text-dorren-dark hover:border-dorren-dark'}`} onClick={() => setTab('docs')}>Docs</button>
         <button className={`px-3 py-2 border ${tab === 'courses' ? 'border-dorren-dark bg-dorren-dark text-white' : 'border-gray-200 text-dorren-dark hover:border-dorren-dark'}`} onClick={() => setTab('courses')}>Courses</button>
+        <button className={`px-3 py-2 border ${tab === 'home' ? 'border-dorren-dark bg-dorren-dark text-white' : 'border-gray-200 text-dorren-dark hover:border-dorren-dark'}`} onClick={() => setTab('home')}>Home</button>
       </div>
 
       {tab === 'news' && newsEditor}
       {tab === 'docs' && docsEditor}
       {tab === 'courses' && coursesEditor}
+      {tab === 'home' && homeEditor}
     </div>
   );
 };

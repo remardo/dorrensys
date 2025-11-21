@@ -1,66 +1,49 @@
 import React from 'react';
 import { ArrowRight, CheckCircle2, Clock } from 'lucide-react';
+import { HomeConfig } from '../types';
 
-const Dashboard: React.FC = () => {
-  const notifications = [
-    '10 новых писем',
-    'Ответ в опросе — 13 июня, 10:22',
-    'Вы записаны на мероприятие — 10 июля, 11:15',
-    'Новый комментарий',
-  ];
+interface DashboardProps {
+  home: HomeConfig;
+}
 
-  const tasks = [
-    { id: 1, title: 'Заполнить отпускной график', time: '15 июня, 13:00', status: 'pending' },
-    { id: 2, title: 'Запись на медосмотр', time: '17 июня, 09:00', status: 'pending' },
-    { id: 3, title: 'Созвон по проекту CRM', time: 'Сегодня, 16:30', status: 'done' },
-  ];
-
-  const events = [
-    { title: 'Воркшоп по аналитике', date: '13 сент.', place: 'Учебный класс', cta: 'Записаться' },
-    { title: 'Демо новых фич', date: '20 сент.', place: 'Онлайн', cta: 'Добавить в календарь' },
-  ];
-
-  const orders = [
-    { title: 'Список партнёров', size: '12.9 Kb', type: 'DOCX' },
-    { title: 'Схема мотивации', size: '181 Kb', type: 'XLSX' },
-  ];
+const Dashboard: React.FC<DashboardProps> = ({ home }) => {
+  const { hero, tiles, notifications, tasks, events, orders } = home;
 
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="grid lg:grid-cols-[2fr_1fr_1fr_1fr] gap-4">
         <div className="relative overflow-hidden bg-gradient-to-br from-[#1f3b57] to-[#101e2b] text-white h-72 flex items-end">
-          <img src="https://placehold.co/900x600/1d3557/ffffff?text=Dorren+Project" alt="hero" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+          <img src={hero.image} alt="hero" className="absolute inset-0 w-full h-full object-cover opacity-60" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
           <div className="relative p-6 space-y-2">
-            <p className="text-xs uppercase tracking-wider text-white/70">21.03.2022</p>
-            <h2 className="text-2xl font-semibold leading-snug">Соединяя берега</h2>
-            <p className="text-sm text-white/80 max-w-2xl">
-              Новый мост через Обь в Новосибирске; работы завершатся в 2023. Платный проезд — 100 рублей. Подробнее в проекте.
-            </p>
-            <button className="text-xs uppercase tracking-wider text-dorren-blue flex items-center gap-1">
-              Подробнее <ArrowRight size={12} />
-            </button>
+            <p className="text-xs uppercase tracking-wider text-white/70">{hero.date}</p>
+            <h2 className="text-2xl font-semibold leading-snug">{hero.title}</h2>
+            <p className="text-sm text-white/80 max-w-2xl">{hero.subtitle}</p>
+            {hero.ctaText && (
+              <button className="text-xs uppercase tracking-wider text-dorren-blue flex items-center gap-1">
+                {hero.ctaText} <ArrowRight size={12} />
+              </button>
+            )}
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-[#1f4c7a] to-[#142c44] text-white p-4 space-y-4">
-          <div>
-            <p className="text-xs uppercase tracking-wider text-white/70">Новый опрос</p>
-            <h4 className="text-sm font-semibold">Оценка удовлетворенности персонала</h4>
-            <button className="text-xs text-dorren-blue mt-1">Пройти опрос</button>
-          </div>
-          <div>
-            <p className="text-xs uppercase tracking-wider text-white/70">Новый курс</p>
-            <h4 className="text-sm font-semibold">Курс молодого бойца</h4>
-            <button className="text-xs text-dorren-blue mt-1">Пройти</button>
-          </div>
+          {tiles.filter((t) => t.variant !== 'primary').map((tile, idx) => (
+            <div key={idx}>
+              <p className="text-xs uppercase tracking-wider text-white/70">{tile.title}</p>
+              <h4 className="text-sm font-semibold">{tile.description}</h4>
+              {tile.cta && <button className="text-xs text-dorren-blue mt-1">{tile.cta}</button>}
+            </div>
+          ))}
         </div>
 
-        <div className="bg-gradient-to-br from-[#ff7b8b] to-[#ffca7b] text-white p-6 flex flex-col justify-center items-start">
-          <p className="text-sm">13:43</p>
-          <p className="text-lg font-semibold">Среда, 3 марта</p>
-          <button className="text-xs uppercase tracking-wider mt-3">Перейти в календарь</button>
-        </div>
+        {tiles.filter((t) => t.variant === 'primary').map((tile, idx) => (
+          <div key={idx} className="bg-gradient-to-br from-[#ff7b8b] to-[#ffca7b] text-white p-6 flex flex-col justify-center items-start">
+            <p className="text-sm">{tile.title}</p>
+            <p className="text-lg font-semibold">{tile.description}</p>
+            {tile.cta && <button className="text-xs uppercase tracking-wider mt-3">{tile.cta}</button>}
+          </div>
+        ))}
 
         <div className="bg-[#2e3b4a] text-white p-4 space-y-3">
           <h4 className="text-sm font-semibold">Уведомления</h4>
@@ -76,7 +59,7 @@ const Dashboard: React.FC = () => {
         <div className="bg-[#2b3340] text-white p-4">
           <h4 className="text-sm font-semibold mb-3">Последние новости</h4>
           <div className="space-y-3 text-xs text-white/80">
-            <p>Соединяя берега — узнать больше</p>
+            <p>{hero.title} — узнать больше</p>
             <p>Запуск мобильного приложения</p>
             <p>Новый соцпакет для сотрудников</p>
           </div>
@@ -89,7 +72,7 @@ const Dashboard: React.FC = () => {
               <div key={idx} className="border-b border-white/10 pb-2">
                 <p className="font-semibold">{ev.title}</p>
                 <p>{ev.date} · {ev.place}</p>
-                <button className="text-dorрен-blue">#{ev.cta}</button>
+                {ev.cta && <button className="text-dorren-blue">#{ev.cta}</button>}
               </div>
             ))}
           </div>
@@ -101,7 +84,7 @@ const Dashboard: React.FC = () => {
             {tasks.map((task) => (
               <li key={task.id} className="border-b border-white/10 pb-2">
                 <div className="flex items-center gap-2 text-xs text-white/80">
-                  <div className={`mt-0.5 ${task.status === 'done' ? 'text-dorрен-blue' : 'text-gray-400'}`}>
+                  <div className={`mt-0.5 ${task.status === 'done' ? 'text-dorren-blue' : 'text-gray-400'}`}>
                     <CheckCircle2 size={12} />
                   </div>
                   <div>
@@ -121,7 +104,7 @@ const Dashboard: React.FC = () => {
               <div key={idx} className="border-b border-white/10 pb-2">
                 <p className="font-semibold">{o.title}</p>
                 <p className="text-white/60">{o.type} · {o.size}</p>
-                <button className="text-dorрен-blue">Скачать</button>
+                <button className="text-dorren-blue">Скачать</button>
               </div>
             ))}
           </div>

@@ -25,6 +25,52 @@ export interface NewsItem {
   body?: string[];
 }
 
+export interface HeroBlock {
+  title: string;
+  subtitle: string;
+  date: string;
+  image: string;
+  ctaText?: string;
+  ctaLink?: string;
+}
+
+export interface Tile {
+  title: string;
+  description: string;
+  cta?: string;
+  link?: string;
+  variant?: 'primary' | 'secondary';
+}
+
+export interface HomeTask {
+  id: string | number;
+  title: string;
+  time: string;
+  status: 'pending' | 'done';
+}
+
+export interface EventItem {
+  title: string;
+  date: string;
+  place: string;
+  cta?: string;
+}
+
+export interface OrderItem {
+  title: string;
+  type: string;
+  size: string;
+}
+
+export interface HomeConfig {
+  hero: HeroBlock;
+  tiles: Tile[];
+  notifications: string[];
+  tasks: HomeTask[];
+  events: EventItem[];
+  orders: OrderItem[];
+}
+
 export interface Course {
   id: number;
   title: string;
