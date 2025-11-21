@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
@@ -13,6 +13,7 @@ import Company from './components/Company';
 import { Search, Bell, Menu } from 'lucide-react';
 import { initialCourses, initialDocs, initialNews, initialHome } from './data';
 import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
+import { fetchNewsFromConvex, pushNewsToConvex } from './convexClient';
 
 const pageTitles: Record<string, string> = {
   '/': 'Главная панель',
@@ -34,6 +35,20 @@ const Layout: React.FC = () => {
   const [home, setHome] = useState<HomeConfig>(initialHome);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const title = pageTitles[location.pathname] ?? 'Portal';
+
+  // При наличии Convex URL подхватываем новости с бэкенда.
+  useEffect(() => {
+    fetchNewsFromConvex().then((items) => {
+      if (items && items.length) {
+        setNewsItems(items);
+      }
+    });
+  }, []);
+
+  const handleNewsChange = async (items: NewsItem[]) => {
+    setNewsItems(items);
+    await pushNewsToConvex(items);
+  };
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-dorren-black font-sans flex">
@@ -88,9 +103,9 @@ const Layout: React.FC = () => {
 
         <div className="p-6 md:p-10 flex-1 overflow-y-auto">
           <Routes>
-            <Route path="/" element={<Dashboard home={home} />} />
-            <Route path="/news" element={<News items={newsItems} />} />
-            <Route path="/news/:slugOrId" element={<NewsDetail items={newsItems} />} />
+          <Route path="/" element={<Dashboard home={home} />} />
+          <Route path="/news" element={<News items={newsItems} />} />
+          <Route path="/news/:slugOrId" element={<NewsDetail items={newsItems} />} />
             <Route path="/tasks" element={<TasksKanban />} />
             <Route path="/lms" element={<LMS courses={courses} />} />
             <Route path="/store" element={<MerchStore />} />
@@ -103,7 +118,7 @@ const Layout: React.FC = () => {
                   docs={docs}
                   courses={courses}
                   home={home}
-                  onNewsChange={setNewsItems}
+                  onNewsChange={handleNewsChange}
                   onDocsChange={setDocs}
                   onCoursesChange={setCourses}
                   onHomeChange={setHome}
