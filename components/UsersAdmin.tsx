@@ -1,56 +1,111 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { fetchUsersFromConvex, updateUserRole } from '../convexClient';
+import React, { useEffect, useState } from 'react';
+import { fetchUsersFromConvex, pushUsersToConvex, updateUserRole } from '../convexClient';
 import { User } from '../types';
 
 interface UsersAdminProps {
   token: string | null;
 }
 
+const mockUsers = (): User[] =>
+  Array.from({ length: 10 }).map((_, idx) => ({
+    id: `mock-${idx}`,
+    name: `Сотрудник ${idx + 1}`,
+    email: `user${idx + 1}@dorren.ru`,
+    role: idx === 0 ? 'admin' : idx < 4 ? 'content' : 'employee',
+    avatar: `https://placehold.co/100/183141/FFFFFF?text=${idx + 1}`,
+    coins: Math.floor(Math.random() * 200),
+  }));
+
 const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState<string | null>(null);
-
-  const roles = useMemo(() => ['admin', 'content', 'employee'], []);
+  const [draft, setDraft] = useState<Partial<User>>({ role: 'employee', avatar: 'https://placehold.co/100' });
 
   useEffect(() => {
     if (!token) return;
     fetchUsersFromConvex()
-      .then((list) => setUsers(list?.map((u: any) => ({ ...u, id: u._id ?? u.id ?? u.email })) ?? []))
+      .then((list) => setUsers(list ?? []))
       .catch((e) => setMessage(e?.message ?? 'Ошибка загрузки пользователей'));
   }, [token]);
 
-  const changeRole = async (email: string, role: string) => {
-    if (!token) {
-      setMessage('Нужна авторизация');
-      return;
-    }
-    setSaving(email);
+  const handleSaveAll = async () => {
+    setLoading(true);
     try {
-      await updateUserRole(email, role, token);
-      setUsers((prev) => prev.map((u) => (u.email === email ? { ...u, role } : u)));
-      setMessage('Роль обновлена');
+      await pushUsersToConvex(users, token);
+      setMessage('Сохранено в БД');
     } catch (e: any) {
-      setMessage(e?.message ?? 'Не удалось обновить роль');
+      setMessage(e?.message ?? 'Не удалось сохранить');
     } finally {
-      setSaving(null);
+      setLoading(false);
     }
   };
 
-  if (!token)
-    return (
-      <div className="text-sm text-gray-500">
-        Для управления пользователями нужно войти (email-код). Сейчас роли не изменить.
-      </div>
-    );
+  const handleAddMock = () => {
+    setUsers(mockUsers());
+    setMessage('Сгенерированы 10 сотрудников, сохраните в БД');
+  };
+
+  const handleAddOne = () => {
+    if (!draft.name || !draft.email) {
+      setMessage('Укажите имя и email');
+      return;
+    }
+    setUsers((prev) => [
+      {
+        id: draft.email!,
+        name: draft.name!,
+        email: draft.email!,
+        role: draft.role ?? 'employee',
+        avatar: draft.avatar ?? 'https://placehold.co/100',
+        coins: draft.coins ?? 0,
+      },
+      ...prev,
+    ]);
+    setDraft({ role: 'employee', avatar: 'https://placehold.co/100' });
+    setMessage('');
+  };
+
+  const handleRoleChange = async (email: string, role: string) => {
+    setUsers((prev) => prev.map((u) => (u.email === email ? { ...u, role } : u)));
+    try {
+      await updateUserRole(email, role, token);
+    } catch (e: any) {
+      setMessage(e?.message ?? 'Ошибка смены роли');
+    }
+  };
+
+  if (!token) return <div className="text-sm text-gray-500">Нужен логин, чтобы управлять пользователями.</div>;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-dorren-black uppercase tracking-brand">Пользователи</h3>
         {message && <span className="text-xs text-gray-500">{message}</span>}
       </div>
+
+      <div className="bg-gray-50 border border-dashed border-gray-200 p-3 space-y-2 text-sm">
+        <div className="grid md:grid-cols-5 gap-2 items-center">
+          <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Имя" value={draft.name ?? ''} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+          <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Email" value={draft.email ?? ''} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
+          <select className="border border-gray-200 px-3 py-2 text-sm" value={draft.role ?? 'employee'} onChange={(e) => setDraft({ ...draft, role: e.target.value })}>
+            <option value="admin">admin</option>
+            <option value="content">content</option>
+            <option value="employee">employee</option>
+          </select>
+          <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Avatar URL" value={draft.avatar ?? ''} onChange={(e) => setDraft({ ...draft, avatar: e.target.value })} />
+          <div className="flex gap-2">
+            <button className="px-3 py-2 bg-dorren-dark text-white text-xs uppercase tracking-wider" onClick={handleAddOne}>
+              Добавить
+            </button>
+            <button className="px-3 py-2 border text-xs uppercase tracking-wider" onClick={handleAddMock}>
+              10 мок
+            </button>
+          </div>
+        </div>
+        <div className="text-xs text-gray-500">После добавления нажмите "Сохранить в БД".</div>
+      </div>
+
       <div className="border border-gray-200 divide-y">
         <div className="grid grid-cols-4 text-xs uppercase tracking-wider text-gray-500 bg-gray-50 px-3 py-2">
           <span>Email</span>
@@ -59,26 +114,27 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
           <span>Действия</span>
         </div>
         {users.map((u) => (
-          <div key={u.id} className="grid grid-cols-4 items-center px-3 py-2 text-sm">
+          <div key={u.email} className="grid grid-cols-4 items-center px-3 py-2 text-sm">
             <span className="truncate">{u.email}</span>
-            <span className="text-gray-700 truncate">{u.name}</span>
-            <select
-              className="border border-gray-300 text-sm px-2 py-1"
-              value={u.role ?? 'employee'}
-              onChange={(e) => changeRole(u.email ?? '', e.target.value)}
-              disabled={saving === u.email}
-            >
-              {roles.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
+            <span className="text-gray-700">{u.name}</span>
+            <select className="border border-gray-200 px-2 py-1 text-sm" value={u.role ?? 'employee'} onChange={(e) => handleRoleChange(u.email ?? '', e.target.value)}>
+              <option value="admin">admin</option>
+              <option value="content">content</option>
+              <option value="employee">employee</option>
             </select>
-            <div className="text-xs text-gray-500">
-              {saving === u.email ? 'Сохранение...' : ' '}
+            <div className="space-x-2">
+              <button className="text-xs px-2 py-1 border border-gray-300 hover:border-dorren-blue hover:text-dorren-blue" onClick={() => setUsers((prev) => prev.filter((item) => item.email !== u.email))}>
+                Удалить
+              </button>
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="flex justify-end">
+        <button onClick={handleSaveAll} disabled={loading} className="px-5 py-2 bg-dorren-dark text-white text-xs uppercase tracking-wider hover:bg-black transition-colors">
+          {loading ? 'Сохранение...' : 'Сохранить в БД'}
+        </button>
       </div>
     </div>
   );

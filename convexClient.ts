@@ -168,6 +168,8 @@ export async function verifyAuthCode(email: string, code: string): Promise<{ tok
 }
 
 export async function updateUserRole(email: string, role: string, token?: string | null) {
-  if (!convexClient || !token) throw new Error('Нет токена');
+  if (!convexClient) throw new Error('Нет подключения к Convex');
   return (convexClient as any).mutation('users:updateUserRole', { token, email, role });
 }
+
+
