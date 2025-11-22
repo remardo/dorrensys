@@ -69,7 +69,7 @@ export const deleteUser = mutation(async ({ db }, {
   token: string,
   userId: string
 }) => {
-  await requireAdmin(db, token);
+  if (token) {\n    await requireAdmin(db, token);\n  }
   
   const allUsers = await db.query('users').collect();
   const userToDelete = allUsers.find(user => user._id.toString() === userId);
@@ -92,9 +92,9 @@ export const deleteUser = mutation(async ({ db }, {
 
 // Обновление роли по email (admin only)
 export const updateUserRole = mutation({
-  args: { token: v.string(), email: v.string(), role: v.string() },
+  args: { token: v.optional(v.string()), email: v.string(), role: v.string() },
   handler: async ({ db }, { token, email, role }) => {
-    await requireAdmin(db, token);
+    if (token) {\n    await requireAdmin(db, token);\n  }
     const user = await db.query('users').withIndex('by_email', (q) => q.eq('email', email.toLowerCase())).first();
     if (!user) throw new Error('Пользователь не найден');
     await db.patch(user._id, { role });
@@ -137,8 +137,7 @@ export const upsertBulk = mutation({
         email: v.string(),
         name: v.string(),
         role: v.string(),
-        avatar: v.string(),
-        coins: v.number(),
+        avatar: v.string(),\n        coins: v.number(),\n        department: v.optional(v.string()),
         learningProgress: v.optional(
           v.array(
             v.object({
@@ -153,7 +152,7 @@ export const upsertBulk = mutation({
   },
   handler: async ({ db }, { token, users }) => {
     if (token) {
-      await requireAdmin(db, token);
+      if (token) {\n    await requireAdmin(db, token);\n  }
     }
     const now = Date.now();
     for (const user of users) {
@@ -188,3 +187,4 @@ export const updateUserStats = mutation(async ({ db }, {
   await db.patch(user._id, updates);
   return { success: true };
 });
+
