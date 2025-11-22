@@ -16,18 +16,14 @@ export const getCoursesByCategory = query(async ({ db }, { category }: { categor
 });
 
 export const createCourse = mutation(async ({ db }, { token, courseData }: { token?: string; courseData: any }) => {
-  if (token) {
-    await requireAdmin(db, token);
-  }
+  
   const now = Date.now();
   await db.insert('courses', { ...courseData, createdAt: now });
   return { success: true };
 });
 
 export const updateCourse = mutation(async ({ db }, { token, id, updates }: { token?: string; id: number; updates: any }) => {
-  if (token) {
-    await requireAdmin(db, token);
-  }
+  
   const existingCourse = await db.query('courses').withIndex('by_itemId', (q) => q.eq('id', id)).first();
   if (!existingCourse) throw new Error('Курс не найден');
   await db.patch(existingCourse._id, updates);
@@ -46,9 +42,7 @@ export const updateCourseProgress = mutation(async ({ db }, { token, id, progres
 });
 
 export const deleteCourse = mutation(async ({ db }, { token, id }: { token?: string; id: number }) => {
-  if (token) {
-    await requireAdmin(db, token);
-  }
+  
   const existingCourse = await db.query('courses').withIndex('by_itemId', (q) => q.eq('id', id)).first();
   if (!existingCourse) throw new Error('Курс не найден');
   await db.delete(existingCourse._id);
@@ -101,9 +95,7 @@ export const upsertBulk = mutation({
     ),
   },
   handler: async ({ db }, { token, items }) => {
-    if (token) {
-      await requireAdmin(db, token);
-    }
+    
     const now = Date.now();
     for (const item of items) {
       const existing = await db.query('courses').withIndex('by_itemId', (q) => q.eq('id', item.id)).first();
@@ -116,3 +108,4 @@ export const upsertBulk = mutation({
     return { ok: true, count: items.length };
   },
 });
+
