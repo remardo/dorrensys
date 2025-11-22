@@ -148,6 +148,7 @@ export async function pushUsersToConvex(users: User[], token?: string | null) {
       role: u.role ?? 'employee',
       avatar: u.avatar || 'https://placehold.co/100',
       coins: Number.isFinite(u.coins) ? u.coins : 0,
+      department: (u as any).department ?? 'mgmt',
       learningProgress: (u as any).learningProgress ?? [],
       tasks: (u as any).tasks ?? [],
     })),
