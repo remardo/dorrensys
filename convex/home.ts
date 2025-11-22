@@ -55,6 +55,7 @@ export const upsert = mutation({
           size: v.string(),
         }),
       ),
+      createdAt: v.optional(v.number()),
     }),
   },
   handler: async ({ db }, { token, config }) => {

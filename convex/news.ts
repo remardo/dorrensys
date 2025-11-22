@@ -70,6 +70,7 @@ export const upsertBulk = mutation({
         description: v.optional(v.string()),
         slug: v.optional(v.string()),
         body: v.optional(v.array(v.string())),
+        createdAt: v.optional(v.number()),
       }),
     ),
   },

@@ -61,6 +61,7 @@ export const upsertBulk = mutation({
         category: v.string(),
         updated: v.string(),
         link: v.string(),
+        createdAt: v.optional(v.number()),
       }),
     ),
   },

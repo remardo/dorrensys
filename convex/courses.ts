@@ -63,6 +63,7 @@ export const upsertBulk = mutation({
         thumbnail: v.string(),
         duration: v.optional(v.string()),
         badge: v.optional(v.string()),
+        createdAt: v.optional(v.number()),
         modules: v.optional(
           v.array(
             v.object({
