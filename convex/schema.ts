@@ -8,6 +8,15 @@ export default defineSchema({
     role: v.string(), // 'admin' | 'user'
     avatar: v.string(),
     coins: v.number(),
+    learningProgress: v.optional(
+      v.array(
+        v.object({
+          courseId: v.number(),
+          progress: v.number(), // 0-100
+        }),
+      ),
+    ),
+    tasks: v.optional(v.array(v.string())),
     createdAt: v.number(),
   }).index('by_email', ['email']).index('by_role', ['role']),
 

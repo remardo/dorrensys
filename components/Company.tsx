@@ -1,5 +1,7 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Mail, Phone, Users, Building2, Plus, Trash, Pencil } from 'lucide-react';
+import { fetchUsersFromConvex, pushUsersToConvex } from '../convexClient';
+import { User } from '../types';
 
 type Person = {
   id: string;
@@ -28,33 +30,93 @@ const seed = (): Block[] => {
   });
 
   const production: Person[] = [];
-  for (let i = 1; i <= 20; i++) production.push(makePerson(i, i <= 5 ? 'Инженер' : i <= 10 ? 'Разработчик' : 'Производство', 'prod'));
+  for (let i = 1; i <= 20; i++) production.push(makePerson(i, i <= 5 ? 'Инженер' : i <= 10 ? 'Мастер участка' : 'Оператор', 'prod'));
 
   const management: Person[] = [];
-  for (let i = 21; i <= 35; i++) management.push(makePerson(i, i <= 23 ? 'Финансы' : i <= 26 ? 'HR' : 'Операции', 'mgmt'));
+  for (let i = 21; i <= 35; i++) management.push(makePerson(i, i <= 23 ? 'Менеджер' : i <= 26 ? 'HR' : 'Бэк-офис', 'mgmt'));
 
   const sales: Person[] = [];
-  for (let i = 36; i <= 50; i++) sales.push(makePerson(i, i <= 40 ? 'Продажи' : 'Аккаунт', 'sales'));
+  for (let i = 36; i <= 50; i++) sales.push(makePerson(i, i <= 40 ? 'Продажи' : 'Маркетинг', 'sales'));
 
   return [
-    { id: 'prod', title: 'Доррен Продакшн', description: 'Производственный блок: разработка, инженерия, производство.', people: production },
-    { id: 'mgmt', title: 'Доррен (Управляющая компания)', description: 'Финансы, HR, юридическая и операционная поддержка.', people: management },
-    { id: 'sales', title: 'Доррен Констракшн', description: 'Продажи и работа с клиентами.', people: sales },
+    { id: 'prod', title: 'Доррен Продакшн', description: 'Производственный блок', people: production },
+    { id: 'mgmt', title: 'Доррен (УК)', description: 'Управляющая компания', people: management },
+    { id: 'sales', title: 'Доррен Констракшн', description: 'Продажи/маркетинг', people: sales },
   ];
 };
 
 const Company: React.FC = () => {
-  const [blocks, setBlocks] = useState<Block[]>(seed());
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [activeBlockId, setActiveBlockId] = useState<string>('prod');
   const [editPerson, setEditPerson] = useState<Person | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const activeBlock = useMemo(() => blocks.find((b) => b.id === activeBlockId) ?? blocks[0], [blocks, activeBlockId]);
+
+  const syncToConvex = async (stateBlocks: Block[]) => {
+    const users: User[] = stateBlocks.flatMap((b) =>
+      b.people.map((p) => ({
+        id: p.id,
+        name: p.name,
+        role: 'employee',
+        email: p.email,
+        avatar: p.avatar ?? 'https://placehold.co/100',
+        coins: Math.floor(Math.random() * 200),
+      })),
+    );
+    await pushUsersToConvex(users, localStorage.getItem('convex_token'));
+  };
+
+  // Синхронизация с БД Convex: если пусто — заливаем сид, иначе используем существующих пользователей
+  useEffect(() => {
+    const syncUsers = async () => {
+      const existing = await fetchUsersFromConvex();
+      if (existing && existing.length) {
+        const grouped: Record<string, Person[]> = { prod: [], mgmt: [], sales: [] };
+        existing.forEach((u, idx) => {
+          const person: Person = {
+            id: u.email ?? `user-${idx}`,
+            name: u.name,
+            role: u.role ?? 'Сотрудник',
+            email: u.email ?? `user${idx}@dorren.ru`,
+            phone: `+7 999 000-00-${(idx % 99).toString().padStart(2, '0')}`,
+            avatar: u.avatar ?? 'https://placehold.co/100',
+          };
+          const roleLower = (u.role ?? '').toLowerCase();
+          if (roleLower.includes('prod') || roleLower.includes('инжен') || roleLower.includes('опера')) grouped.prod.push(person);
+          else if (roleLower.includes('sales') || roleLower.includes('прод')) grouped.sales.push(person);
+          else grouped.mgmt.push(person);
+        });
+        setBlocks([
+          { id: 'prod', title: 'Доррен Продакшн', description: 'Производственный блок', people: grouped.prod },
+          { id: 'mgmt', title: 'Доррен (УК)', description: 'Управляющая компания', people: grouped.mgmt },
+          { id: 'sales', title: 'Доррен Констракшн', description: 'Продажи/маркетинг', people: grouped.sales },
+        ]);
+      } else {
+        const seeded = seed();
+        setBlocks(seeded);
+        const seedUsers: User[] = seeded.flatMap((b) =>
+          b.people.map((p) => ({
+            id: p.id,
+            name: p.name,
+            role: 'employee',
+            email: p.email,
+            avatar: p.avatar ?? 'https://placehold.co/100',
+            coins: Math.floor(Math.random() * 200),
+          })),
+        );
+        await pushUsersToConvex(seedUsers, localStorage.getItem('convex_token'));
+      }
+      setLoading(false);
+    };
+    syncUsers();
+  }, []);
 
   const handleSavePerson = () => {
     if (!editPerson || !activeBlock) return;
     if (!editPerson.name.trim()) return;
-    setBlocks((prev) =>
-      prev.map((b) =>
+    setBlocks((prev) => {
+      const next = prev.map((b) =>
         b.id === activeBlock.id
           ? {
               ...b,
@@ -63,17 +125,19 @@ const Company: React.FC = () => {
                 : [{ ...editPerson, id: `${activeBlock.id}-${Date.now()}` }, ...b.people],
             }
           : b,
-      ),
-    );
+      );
+      syncToConvex(next);
+      return next;
+    });
     setEditPerson(null);
   };
 
   const handleDeletePerson = (personId: string) => {
-    setBlocks((prev) =>
-      prev.map((b) =>
-        b.id === activeBlockId ? { ...b, people: b.people.filter((p) => p.id !== personId) } : b,
-      ),
-    );
+    setBlocks((prev) => {
+      const next = prev.map((b) => (b.id === activeBlockId ? { ...b, people: b.people.filter((p) => p.id !== personId) } : b));
+      syncToConvex(next);
+      return next;
+    });
     if (editPerson?.id === personId) setEditPerson(null);
   };
 
@@ -82,17 +146,19 @@ const Company: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-light text-dorren-black uppercase tracking-widest mb-2">Компания</h2>
-          <p className="text-gray-500 font-light text-sm">Оргструктура, команды и контакты (≈50 сотрудников).</p>
+          <p className="text-gray-500 font-light text-sm">Все сотрудники хранятся в БД Convex и доступны во всех модулях.</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Building2 size={18} />
-          <span>Обновлено: январь 2025</span>
+          <span>Обновлено: {new Date().toLocaleDateString()}</span>
         </div>
       </div>
 
+      {loading && <div className="text-sm text-gray-500">Загружаем сотрудников из базы...</div>}
+
       <div className="grid lg:grid-cols-[320px_auto] gap-6">
         <div className="bg-white border border-gray-100 p-4 space-y-3 shadow-sm">
-          <h3 className="text-xs font-bold uppercase tracking-brand text-dorren-black mb-2">Блоки</h3>
+          <h3 className="text-xs font-bold uppercase tracking-brand text-dorren-black mb-2">Подразделения</h3>
           <div className="space-y-2">
             {blocks.map((b) => (
               <button
@@ -105,7 +171,7 @@ const Company: React.FC = () => {
               >
                 <p className="text-sm font-semibold text-dorren-black">{b.title}</p>
                 <p className="text-xs text-gray-500">{b.description}</p>
-                <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">{b.people.length} человек</p>
+                <p className="text-[10px] text-gray-400 uppercase tracking-wider mt-1">{b.people.length} сотрудников</p>
               </button>
             ))}
           </div>
@@ -169,7 +235,7 @@ const Company: React.FC = () => {
               {editPerson && (
                 <div className="bg-white border border-gray-100 shadow-sm p-4 space-y-3">
                   <h4 className="text-sm font-bold uppercase tracking-brand text-dorren-black mb-2">
-                    {editPerson.id ? 'Редактирование' : 'Новый сотрудник'} — {activeBlock.title}
+                    {editPerson.id ? 'Редактирование' : 'Новый сотрудник'} - {activeBlock.title}
                   </h4>
                   <div className="grid md:grid-cols-2 gap-3">
                     <div>

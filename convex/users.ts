@@ -129,6 +129,45 @@ export const initializeUsers = mutation(async ({ db }, {
   return { success: true, count: users.length };
 });
 
+export const upsertBulk = mutation({
+  args: {
+    token: v.optional(v.string()),
+    users: v.array(
+      v.object({
+        email: v.string(),
+        name: v.string(),
+        role: v.string(),
+        avatar: v.string(),
+        coins: v.number(),
+        learningProgress: v.optional(
+          v.array(
+            v.object({
+              courseId: v.number(),
+              progress: v.number(),
+            }),
+          ),
+        ),
+        tasks: v.optional(v.array(v.string())),
+      }),
+    ),
+  },
+  handler: async ({ db }, { token, users }) => {
+    if (token) {
+      await requireAdmin(db, token);
+    }
+    const now = Date.now();
+    for (const user of users) {
+      const existing = await db.query('users').withIndex('by_email', (q) => q.eq('email', user.email.toLowerCase())).first();
+      if (existing?._id) {
+        await db.patch(existing._id, { ...user });
+      } else {
+        await db.insert('users', { ...user, createdAt: now });
+      }
+    }
+    return { ok: true, count: users.length };
+  },
+});
+
 // Функция для обновления статистики пользователя
 export const updateUserStats = mutation(async ({ db }, {
   token,

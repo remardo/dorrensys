@@ -65,6 +65,7 @@ export const upsertBulk = mutation({
         assigneeEmail: v.optional(v.string()),
         assigneeName: v.optional(v.string()),
         assigneeAvatar: v.optional(v.string()),
+        createdAt: v.optional(v.number()),
       }),
     ),
   },
@@ -76,9 +77,9 @@ export const upsertBulk = mutation({
     for (const item of items) {
       const existing = await db.query('tasks').withIndex('by_itemId', (q) => q.eq('id', item.id)).first();
       if (existing?._id) {
-        await db.patch(existing._id, { ...item });
+        await db.patch(existing._id, { ...item, createdAt: item.createdAt ?? existing.createdAt ?? now });
       } else {
-        await db.insert('tasks', { ...item, createdAt: now });
+        await db.insert('tasks', { ...item, createdAt: item.createdAt ?? now });
       }
     }
     return { ok: true, count: items.length };

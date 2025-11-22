@@ -139,6 +139,22 @@ export async function fetchUsersFromConvex(): Promise<User[] | null> {
   }
 }
 
+export async function pushUsersToConvex(users: User[], token?: string | null) {
+  if (!convexClient) return;
+  const sanitized = stripMeta<User[]>(
+    users.map((u) => ({
+      email: u.email ?? '',
+      name: u.name,
+      role: u.role ?? 'employee',
+      avatar: u.avatar || 'https://placehold.co/100',
+      coins: Number.isFinite(u.coins) ? u.coins : 0,
+      learningProgress: (u as any).learningProgress ?? [],
+      tasks: (u as any).tasks ?? [],
+    })),
+  );
+  await (convexClient as any).mutation('users:upsertBulk', { users: sanitized, token });
+}
+
 export async function requestAuthCode(email: string): Promise<string | null> {
   if (!convexClient) return null;
   const result = await (convexClient as any).mutation('auth:requestCode', { email });
