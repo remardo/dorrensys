@@ -1,4 +1,4 @@
-import { mutation, query } from 'convex/server';
+import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
 import { requireAdmin, requireSession } from './auth';
 
@@ -88,6 +88,18 @@ export const deleteUser = mutation(async ({ db }, {
   
   await db.delete(userToDelete._id);
   return { success: true };
+});
+
+// Обновление роли по email (admin only)
+export const updateUserRole = mutation({
+  args: { token: v.string(), email: v.string(), role: v.string() },
+  handler: async ({ db }, { token, email, role }) => {
+    await requireAdmin(db, token);
+    const user = await db.query('users').withIndex('by_email', (q) => q.eq('email', email.toLowerCase())).first();
+    if (!user) throw new Error('Пользователь не найден');
+    await db.patch(user._id, { role });
+    return { success: true };
+  },
 });
 
 // Функция для массовой инициализации данных

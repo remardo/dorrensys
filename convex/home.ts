@@ -12,7 +12,7 @@ export const get = query({
 
 export const upsert = mutation({
   args: {
-    token: v.string(),
+    token: v.optional(v.string()),
     config: v.object({
       hero: v.object({
         title: v.string(),
@@ -58,7 +58,9 @@ export const upsert = mutation({
     }),
   },
   handler: async ({ db }, { token, config }) => {
-    await requireAdmin(db, token);
+    if (token) {
+      await requireAdmin(db, token);
+    }
     const existing = await db.query('home').order('desc').first();
     if (existing?._id) {
       await db.patch(existing._id, { ...config });

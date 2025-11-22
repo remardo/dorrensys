@@ -7,6 +7,8 @@
     "dev": "vite --config vite.config.ts --host 0.0.0.0 --port 3000 --strictPort --clearScreen false",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run --watch=false",
+    "test:ui": "vitest",
     "convex:init": "tsx scripts/initConvex.ts",
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy"
@@ -20,13 +22,23 @@
     "recharts": "^3.4.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^27.2.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.14",
+    "tsx": "^4.19.2",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
-    "tsx": "^4.19.2"
+    "vitest": "^4.0.13"
+  },
+  "vitest": {
+    "environment": "jsdom",
+    "setupFiles": [
+      "./test/setup.ts"
+    ]
   }
 }

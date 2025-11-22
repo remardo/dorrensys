@@ -40,7 +40,7 @@ export const upsertBulk = mutation({
   handler: async ({ db }, { token, items }) => {
     await requireAdmin(db, token);
     for (const course of items) {
-      const existing = await db.query('courses').withIndex('by_id', (q) => q.eq('id', course.id)).first();
+      const existing = await db.query('courses').withIndex('by_itemId', (q) => q.eq('id', course.id)).first();
       if (existing?._id) {
         await db.patch(existing._id, { ...course });
       } else {

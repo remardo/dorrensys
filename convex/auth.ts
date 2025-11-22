@@ -1,4 +1,4 @@
-import { mutation, query } from 'convex/server';
+import { mutation } from './_generated/server';
 import { v } from 'convex/values';
 
 const CODE_TTL_MS = 10 * 60 * 1000; // 10 минут
@@ -9,8 +9,8 @@ function generateCode() {
 }
 
 function generateToken() {
-  const random = crypto.getRandomValues(new Uint32Array(4));
-  return Array.from(random, (n) => n.toString(16)).join('');
+  // Простой псевдослучайный токен без зависимости от WebCrypto (в среде Convex crypto недоступен)
+  return Array.from({ length: 4 }, () => Math.floor(Math.random() * 1e9).toString(16)).join('-');
 }
 
 export const requestCode = mutation({

@@ -9,8 +9,8 @@ function generateCode() {
 }
 
 function generateToken() {
-  const random = crypto.getRandomValues(new Uint32Array(4));
-  return Array.from(random, (n) => n.toString(16)).join('');
+  // Простой псевдослучайный токен без зависимости от WebCrypto (в среде Convex crypto недоступен)
+  return Array.from({ length: 4 }, () => Math.floor(Math.random() * 1e9).toString(16)).join('-');
 }
 
 export const requestCode = mutation({
@@ -18,7 +18,6 @@ export const requestCode = mutation({
   handler: async ({ db }, { email }) => {
     const code = generateCode();
     await db.insert('authCodes', { email: email.toLowerCase(), code, createdAt: Date.now() });
-    // В бою нужно отправлять email; здесь возвращаем код для dev.
     return { code };
   },
 });
@@ -34,13 +33,17 @@ export const verifyCode = mutation({
 
     const token = generateToken();
     await db.insert('sessions', { email: email.toLowerCase(), token, createdAt: now });
-    // Создаём пользователя, если его нет; первого делаем админом.
+    
+    // Создаем пользователя, если нет; первый становится админом.
     const existingUser = await db.query('users').withIndex('by_email', (q) => q.eq('email', email.toLowerCase())).first();
     const anyAdmin = await db.query('users').withIndex('by_role', (q) => q.eq('role', 'admin')).first();
     if (!existingUser) {
       await db.insert('users', {
         email: email.toLowerCase(),
+        name: email.split('@')[0],
         role: anyAdmin ? 'user' : 'admin',
+        avatar: 'https://placehold.co/100/100?random=' + Date.now(),
+        coins: 0,
         createdAt: now,
       });
     }
@@ -49,7 +52,7 @@ export const verifyCode = mutation({
 });
 
 export async function requireSession(db: any, token: string) {
-  if (!token) throw new Error('Нет токена');
+  if (!token) throw new Error('Нет сессии');
   const session = await db.query('sessions').withIndex('by_token', (q: any) => q.eq('token', token)).first();
   if (!session) throw new Error('Сессия не найдена');
   if (Date.now() - session.createdAt > SESSION_TTL_MS) throw new Error('Сессия устарела, войдите снова');

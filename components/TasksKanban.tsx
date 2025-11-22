@@ -19,10 +19,10 @@ import {
 } from 'lucide-react';
 
 const EMPLOYEES: User[] = [
-  { id: 'u1', name: 'Смирнов А.', role: 'Project Manager', avatar: 'https://placehold.co/100/100?random=101', coins: 0 },
-  { id: 'u2', name: 'Егорова Е.', role: 'UX/UI Designer', avatar: 'https://placehold.co/100/100?random=102', coins: 0 },
-  { id: 'u3', name: 'Котов И.', role: 'Frontend Dev', avatar: 'https://placehold.co/100/100?random=103', coins: 0 },
-  { id: 'u4', name: 'Ли В.', role: 'QA Engineer', avatar: 'https://placehold.co/100/100?random=104', coins: 0 },
+  { id: 'u1', name: 'Смирнов А.', email: 'smirnov@company.com', role: 'Project Manager', avatar: 'https://placehold.co/100/100?random=101', coins: 0 },
+  { id: 'u2', name: 'Егорова Е.', email: 'egorova@company.com', role: 'UX/UI Designer', avatar: 'https://placehold.co/100/100?random=102', coins: 0 },
+  { id: 'u3', name: 'Котов И.', email: 'kotov@company.com', role: 'Frontend Dev', avatar: 'https://placehold.co/100/100?random=103', coins: 0 },
+  { id: 'u4', name: 'Ли В.', email: 'li@company.com', role: 'QA Engineer', avatar: 'https://placehold.co/100/100?random=104', coins: 0 },
 ];
 
 const LOCAL_TASKS: Task[] = [
@@ -32,7 +32,9 @@ const LOCAL_TASKS: Task[] = [
     description: 'Обновить шаблоны писем, добавить ссылки на Confluence, проверить сегменты.',
     status: 'todo',
     priority: 'high',
-    assignee: EMPLOYEES[0],
+    assigneeEmail: 'smirnov@company.com',
+    assigneeName: 'Смирнов А.',
+    assigneeAvatar: EMPLOYEES[0].avatar,
     createdAt: new Date().toISOString(),
   },
   {
@@ -49,7 +51,9 @@ const LOCAL_TASKS: Task[] = [
     description: 'Согласовать требования, собрать материалы для страницы, настроить отклики.',
     status: 'in-progress',
     priority: 'high',
-    assignee: EMPLOYEES[1],
+    assigneeEmail: 'egorova@company.com',
+    assigneeName: 'Егорова Е.',
+    assigneeAvatar: EMPLOYEES[1].avatar,
     createdAt: new Date(Date.now() - 3600000).toISOString(),
   },
   {
@@ -58,7 +62,9 @@ const LOCAL_TASKS: Task[] = [
     description: 'Учесть правки по иллюстрациям и цвету, проверить адаптив.',
     status: 'in-progress',
     priority: 'low',
-    assignee: EMPLOYEES[2],
+    assigneeEmail: 'kotov@company.com',
+    assigneeName: 'Котов И.',
+    assigneeAvatar: EMPLOYEES[2].avatar,
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
   },
   {
@@ -552,9 +558,34 @@ const TasksKanban: React.FC = () => {
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
   const handleAssignTask = (taskId: string, user?: User) => {
-    setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, assignee: user } : t)));
+    setTasks((prev) => prev.map((t) => 
+      t.id === taskId 
+        ? { 
+            ...t, 
+            assigneeEmail: user?.email,
+            assigneeName: user?.name,
+            assigneeAvatar: user?.avatar,
+            assignee: user 
+          } 
+        : t
+    ));
     if (selectedTask && selectedTask.id === taskId) {
-      setSelectedTask(user ? { ...selectedTask, assignee: user } : { ...selectedTask, assignee: undefined });
+      setSelectedTask(user 
+        ? { 
+            ...selectedTask, 
+            assigneeEmail: user?.email,
+            assigneeName: user?.name,
+            assigneeAvatar: user?.avatar,
+            assignee: user 
+          } 
+        : { 
+            ...selectedTask, 
+            assigneeEmail: undefined,
+            assigneeName: undefined,
+            assigneeAvatar: undefined,
+            assignee: undefined 
+          }
+      );
     }
   };
 
@@ -775,13 +806,17 @@ const TasksKanban: React.FC = () => {
         <NewTaskModal
           onClose={() => setIsNewTaskOpen(false)}
           onSave={(payload) => {
+            const assignee = payload.assignee;
             const newTask: Task = {
               id: Date.now().toString(),
               title: payload.title,
               description: payload.description ?? '',
               priority: payload.priority ?? 'medium',
               status: payload.status ?? 'todo',
-              assignee: payload.assignee,
+              assigneeEmail: assignee?.email,
+              assigneeName: assignee?.name,
+              assigneeAvatar: assignee?.avatar,
+              assignee: assignee,
               createdAt: new Date().toISOString(),
             };
             setTasks((prev) => [newTask, ...prev]);

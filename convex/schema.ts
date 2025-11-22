@@ -34,7 +34,7 @@ export default defineSchema({
     slug: v.optional(v.string()),
     body: v.optional(v.array(v.string())),
     createdAt: v.number(),
-  }).index('by_slug', ['slug']).index('by_id', ['id']).index('by_category', ['category']),
+  }).index('by_slug', ['slug']).index('by_itemId', ['id']).index('by_category', ['category']),
 
   docs: defineTable({
     id: v.number(),
@@ -45,7 +45,7 @@ export default defineSchema({
     updated: v.string(),
     link: v.string(),
     createdAt: v.number(),
-  }).index('by_id', ['id']).index('by_category', ['category']).index('by_type', ['type']),
+  }).index('by_itemId', ['id']).index('by_category', ['category']).index('by_type', ['type']),
 
   courses: defineTable({
     id: v.number(),
@@ -86,7 +86,7 @@ export default defineSchema({
       ),
     ),
     createdAt: v.number(),
-  }).index('by_id', ['id']).index('by_category', ['category']),
+  }).index('by_itemId', ['id']).index('by_category', ['category']),
 
   tasks: defineTable({
     id: v.string(),
@@ -98,7 +98,7 @@ export default defineSchema({
     assigneeName: v.optional(v.string()),
     assigneeAvatar: v.optional(v.string()),
     createdAt: v.number(),
-  }).index('by_status', ['status']).index('by_id', ['id']).index('by_assignee', ['assigneeEmail']).index('by_priority', ['priority']),
+  }).index('by_status', ['status']).index('by_itemId', ['id']).index('by_assignee', ['assigneeEmail']).index('by_priority', ['priority']),
 
   orders: defineTable({
     title: v.string(),

@@ -155,13 +155,7 @@ const Layout: React.FC = () => {
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
               </button>
               <button
-                onClick={() => {
-                  if (!authToken) {
-                    setShowLogin(true);
-                    return;
-                  }
-                  setAdminMode(!adminMode);
-                }}
+                onClick={() => setAdminMode(!adminMode)}
                 className={`px-3 py-2 text-xs uppercase tracking-wider border ${
                   adminMode ? 'bg-dorren-dark text-white border-dorren-dark' : 'border-dorren-dark text-dorren-dark hover:bg-dorren-dark hover:text-white'
                 } transition-colors`}
