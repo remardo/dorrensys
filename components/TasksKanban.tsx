@@ -539,15 +539,27 @@ const TableView: React.FC<{
 );
 
 const TasksKanban: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>(LOCAL_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
   
   // Загрузка данных из Convex при инициализации
   useEffect(() => {
-    fetchTasksFromConvex().then((convexTasks) => {
-      if (convexTasks && convexTasks.length > 0) {
-        setTasks(convexTasks);
+    const loadTasks = async () => {
+      try {
+        const convexTasks = await fetchTasksFromConvex();
+        if (convexTasks && convexTasks.length > 0) {
+          setTasks(convexTasks);
+        } else {
+          // Если БД пустая, инициализируем тестовыми данными
+          setTasks(LOCAL_TASKS);
+          await pushTasksToConvex(LOCAL_TASKS, localStorage.getItem('convex_token'));
+        }
+      } catch (error) {
+        console.error('Ошибка загрузки задач:', error);
+        // При ошибке используем локальные данные
+        setTasks(LOCAL_TASKS);
       }
-    });
+    };
+    loadTasks();
   }, []);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
@@ -557,8 +569,8 @@ const TasksKanban: React.FC = () => {
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
 
-  const handleAssignTask = (taskId: string, user?: User) => {
-    setTasks((prev) => prev.map((t) => 
+  const handleAssignTask = async (taskId: string, user?: User) => {
+    const updatedTasks = tasks.map((t) => 
       t.id === taskId 
         ? { 
             ...t, 
@@ -568,7 +580,9 @@ const TasksKanban: React.FC = () => {
             assignee: user 
           } 
         : t
-    ));
+    );
+    setTasks(updatedTasks);
+    
     if (selectedTask && selectedTask.id === taskId) {
       setSelectedTask(user 
         ? { 
@@ -586,6 +600,13 @@ const TasksKanban: React.FC = () => {
             assignee: undefined 
           }
       );
+    }
+    
+    // Синхронизируем с Convex
+    try {
+      await pushTasksToConvex(updatedTasks, localStorage.getItem('convex_token'));
+    } catch (error) {
+      console.error('Ошибка синхронизации назначения задачи:', error);
     }
   };
 
@@ -608,29 +629,18 @@ const TasksKanban: React.FC = () => {
     return true;
   });
 
-  const moveTask = (taskId: string, toStatus: Task['status'], beforeId?: string) => {
-    setTasks((prev) => {
-      const current = [...prev];
-      const idx = current.findIndex((t) => t.id === taskId);
-      if (idx === -1) return prev;
-      const [task] = current.splice(idx, 1);
-      const updatedTask = { ...task, status: toStatus };
-      if (beforeId) {
-        const insertIndex = current.findIndex((t) => t.id === beforeId);
-        if (insertIndex >= 0) {
-          current.splice(insertIndex, 0, updatedTask);
-        } else {
-          current.push(updatedTask);
-        }
-      } else {
-        current.push(updatedTask);
-      }
-      return current;
-    });
-    pushTasksToConvex(
-      tasks.map((t) => (t.id === taskId ? { ...t, status: toStatus } : t)),
-      localStorage.getItem('convex_token'),
+  const moveTask = async (taskId: string, toStatus: Task['status'], beforeId?: string) => {
+    const updatedTasks = tasks.map((t) => 
+      t.id === taskId ? { ...t, status: toStatus } : t
     );
+    setTasks(updatedTasks);
+    
+    // Синхронизируем с Convex
+    try {
+      await pushTasksToConvex(updatedTasks, localStorage.getItem('convex_token'));
+    } catch (error) {
+      console.error('Ошибка синхронизации перемещения задачи:', error);
+    }
   };
 
   const handleDragStart = (task: Task) => setDraggingId(task.id);
@@ -805,7 +815,7 @@ const TasksKanban: React.FC = () => {
       {isNewTaskOpen && (
         <NewTaskModal
           onClose={() => setIsNewTaskOpen(false)}
-          onSave={(payload) => {
+          onSave={async (payload) => {
             const assignee = payload.assignee;
             const newTask: Task = {
               id: Date.now().toString(),
@@ -819,8 +829,17 @@ const TasksKanban: React.FC = () => {
               assignee: assignee,
               createdAt: new Date().toISOString(),
             };
-            setTasks((prev) => [newTask, ...prev]);
-            pushTasksToConvex([newTask, ...tasks], localStorage.getItem('convex_token'));
+            
+            // Сохраняем локально
+            const updatedTasks = [newTask, ...tasks];
+            setTasks(updatedTasks);
+            
+            // Сохраняем в Convex
+            try {
+              await pushTasksToConvex(updatedTasks, localStorage.getItem('convex_token'));
+            } catch (error) {
+              console.error('Ошибка сохранения задачи в Convex:', error);
+            }
           }}
         />
       )}
