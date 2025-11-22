@@ -12,6 +12,7 @@ const mockUsers = (): User[] =>
     name: `Сотрудник ${idx + 1}`,
     email: `user${idx + 1}@dorren.ru`,
     role: idx === 0 ? 'admin' : idx < 4 ? 'content' : 'employee',
+    department: idx < 3 ? 'prod' : idx < 6 ? 'mgmt' : 'sales',
     avatar: `https://placehold.co/100/183141/FFFFFF?text=${idx + 1}`,
     coins: Math.floor(Math.random() * 200),
   }));
@@ -20,7 +21,7 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [draft, setDraft] = useState<Partial<User>>({ role: 'employee', avatar: 'https://placehold.co/100' });
+  const [draft, setDraft] = useState<Partial<User>>({ role: 'employee', department: 'mgmt', avatar: 'https://placehold.co/100' });
 
   useEffect(() => {
     if (!token) return;
@@ -57,12 +58,13 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
         name: draft.name!,
         email: draft.email!,
         role: draft.role ?? 'employee',
+        department: draft.department ?? 'mgmt',
         avatar: draft.avatar ?? 'https://placehold.co/100',
         coins: draft.coins ?? 0,
       },
       ...prev,
     ]);
-    setDraft({ role: 'employee', avatar: 'https://placehold.co/100' });
+    setDraft({ role: 'employee', department: 'mgmt', avatar: 'https://placehold.co/100' });
     setMessage('');
   };
 
@@ -85,13 +87,18 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
       </div>
 
       <div className="bg-gray-50 border border-dashed border-gray-200 p-3 space-y-2 text-sm">
-        <div className="grid md:grid-cols-5 gap-2 items-center">
+        <div className="grid md:grid-cols-6 gap-2 items-center">
           <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Имя" value={draft.name ?? ''} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
           <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Email" value={draft.email ?? ''} onChange={(e) => setDraft({ ...draft, email: e.target.value })} />
           <select className="border border-gray-200 px-3 py-2 text-sm" value={draft.role ?? 'employee'} onChange={(e) => setDraft({ ...draft, role: e.target.value })}>
             <option value="admin">admin</option>
             <option value="content">content</option>
             <option value="employee">employee</option>
+          </select>
+          <select className="border border-gray-200 px-3 py-2 text-sm" value={draft.department ?? 'mgmt'} onChange={(e) => setDraft({ ...draft, department: e.target.value })}>
+            <option value="prod">Продакшн</option>
+            <option value="mgmt">УК</option>
+            <option value="sales">Констракшн</option>
           </select>
           <input className="border border-gray-200 px-3 py-2 text-sm" placeholder="Avatar URL" value={draft.avatar ?? ''} onChange={(e) => setDraft({ ...draft, avatar: e.target.value })} />
           <div className="flex gap-2">
@@ -107,20 +114,30 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
       </div>
 
       <div className="border border-gray-200 divide-y">
-        <div className="grid grid-cols-4 text-xs uppercase tracking-wider text-gray-500 bg-gray-50 px-3 py-2">
+        <div className="grid grid-cols-5 text-xs uppercase tracking-wider text-gray-500 bg-gray-50 px-3 py-2">
           <span>Email</span>
           <span>Имя</span>
           <span>Роль</span>
+          <span>Отдел</span>
           <span>Действия</span>
         </div>
         {users.map((u) => (
-          <div key={u.email} className="grid grid-cols-4 items-center px-3 py-2 text-sm">
+          <div key={u.email} className="grid grid-cols-5 items-center px-3 py-2 text-sm">
             <span className="truncate">{u.email}</span>
             <span className="text-gray-700">{u.name}</span>
             <select className="border border-gray-200 px-2 py-1 text-sm" value={u.role ?? 'employee'} onChange={(e) => handleRoleChange(u.email ?? '', e.target.value)}>
               <option value="admin">admin</option>
               <option value="content">content</option>
               <option value="employee">employee</option>
+            </select>
+            <select
+              className="border border-gray-200 px-2 py-1 text-sm"
+              value={(u as any).department ?? 'mgmt'}
+              onChange={(e) => setUsers((prev) => prev.map((item) => (item.email === u.email ? { ...item, department: e.target.value } : item)))}
+            >
+              <option value="prod">Продакшн</option>
+              <option value="mgmt">УК</option>
+              <option value="sales">Констракшн</option>
             </select>
             <div className="space-x-2">
               <button className="text-xs px-2 py-1 border border-gray-300 hover:border-dorren-blue hover:text-dorren-blue" onClick={() => setUsers((prev) => prev.filter((item) => item.email !== u.email))}>
