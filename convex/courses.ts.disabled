@@ -1,0 +1,52 @@
+import { mutation, query } from './_generated/server';
+import { v } from 'convex/values';
+import { requireAdmin } from './auth';
+
+const moduleShape = v.object({
+  id: v.string(),
+  title: v.string(),
+  type: v.string(),
+  duration: v.string(),
+  description: v.optional(v.string()),
+  videoUrl: v.optional(v.string()),
+  imageUrl: v.optional(v.string()),
+  sections: v.optional(v.array(v.string())),
+  content: v.optional(v.string()),
+});
+
+export const list = query({
+  args: {},
+  handler: async ({ db }) => db.query('courses').order('desc').collect(),
+});
+
+export const upsertBulk = mutation({
+  args: {
+    token: v.string(),
+    items: v.array(
+      v.object({
+        id: v.number(),
+        title: v.string(),
+        category: v.optional(v.string()),
+        description: v.optional(v.string()),
+        progress: v.number(),
+        totalModules: v.number(),
+        thumbnail: v.string(),
+        duration: v.optional(v.string()),
+        badge: v.optional(v.string()),
+        modules: v.optional(v.array(moduleShape)),
+      }),
+    ),
+  },
+  handler: async ({ db }, { token, items }) => {
+    await requireAdmin(db, token);
+    for (const course of items) {
+      const existing = await db.query('courses').withIndex('by_id', (q) => q.eq('id', course.id)).first();
+      if (existing?._id) {
+        await db.patch(existing._id, { ...course });
+      } else {
+        await db.insert('courses', { ...course, createdAt: Date.now() });
+      }
+    }
+    return { ok: true, count: items.length };
+  },
+});

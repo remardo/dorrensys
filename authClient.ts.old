@@ -1,0 +1,67 @@
+import { Course, DocumentItem, NewsItem, Task, User } from './types';
+import { db } from './backend/database';
+
+export async function requestEmailCode(email: string): Promise<string | null> {
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  await db.createAuthCode(email, code);
+  return code; // В продакшене - отправка по email
+}
+
+export async function verifyEmailCode(email: string, code: string): Promise<string | null> {
+  const isValid = await db.verifyAuthCode(email, code);
+  if (!isValid) return null;
+  
+  const token = 'token_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  await db.createSession(email, token);
+  return token;
+}
+
+export async function fetchUsers(token: string): Promise<User[]> {
+  const user = await db.getUserByToken(token);
+  if (!user) return [];
+  return [user];
+}
+
+export async function setUserRole(token: string, email: string, role: string) {
+  console.log(`Setting role ${role} for ${email}`);
+}
+
+// News functions
+export async function fetchNewsFromConvex(): Promise<NewsItem[] | null> {
+  return await db.getNews();
+}
+
+export async function pushNewsToConvex(items: NewsItem[], token?: string | null) {
+  // В реальном проекте здесь был бы вызов к API для сохранения
+  console.log(`Saving ${items.length} news items`);
+}
+
+// Docs functions
+export async function fetchDocsFromConvex(): Promise<DocumentItem[] | null> {
+  return await db.getDocs();
+}
+
+export async function pushDocsToConvex(items: DocumentItem[], token?: string | null) {
+  console.log(`Saving ${items.length} docs`);
+}
+
+// Courses functions
+export async function fetchCoursesFromConvex(): Promise<Course[] | null> {
+  return await db.getCourses();
+}
+
+export async function pushCoursesToConvex(items: Course[], token?: string | null) {
+  console.log(`Saving ${items.length} courses`);
+}
+
+// Tasks functions
+export async function fetchTasksFromConvex(): Promise<Task[] | null> {
+  return await db.getTasks();
+}
+
+export async function pushTasksToConvex(items: Task[], token?: string | null) {
+  // Обновляем все задачи
+  for (const task of items) {
+    await db.updateTask(task.id, task);
+  }
+}

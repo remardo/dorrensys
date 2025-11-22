@@ -18,6 +18,7 @@ export const requestCode = mutation({
   handler: async ({ db }, { email }) => {
     const code = generateCode();
     await db.insert('authCodes', { email: email.toLowerCase(), code, createdAt: Date.now() });
+    // В бою нужно отправлять email; здесь возвращаем код для dev.
     return { code };
   },
 });
@@ -33,17 +34,13 @@ export const verifyCode = mutation({
 
     const token = generateToken();
     await db.insert('sessions', { email: email.toLowerCase(), token, createdAt: now });
-    
     // Создаём пользователя, если его нет; первого делаем админом.
     const existingUser = await db.query('users').withIndex('by_email', (q) => q.eq('email', email.toLowerCase())).first();
     const anyAdmin = await db.query('users').withIndex('by_role', (q) => q.eq('role', 'admin')).first();
     if (!existingUser) {
       await db.insert('users', {
         email: email.toLowerCase(),
-        name: email.split('@')[0],
         role: anyAdmin ? 'user' : 'admin',
-        avatar: 'https://placehold.co/100/100?random=' + Date.now(),
-        coins: 0,
         createdAt: now,
       });
     }

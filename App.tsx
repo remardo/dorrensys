@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Search, Bell, Menu } from 'lucide-react';
+
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import MerchStore from './components/MerchStore';
@@ -10,16 +12,25 @@ import NewsDetail from './components/NewsDetail';
 import Docs from './components/Docs';
 import AdminPanel from './components/AdminPanel';
 import Company from './components/Company';
-import { Search, Bell, Menu } from 'lucide-react';
-import { initialCourses, initialDocs, initialNews, initialHome } from './data';
-import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
-import { fetchNewsFromConvex, pushNewsToConvex, fetchDocsFromConvex, pushDocsToConvex, fetchCoursesFromConvex, pushCoursesToConvex } from './convexClient';
 import AuthWidget from './components/AuthWidget';
 import LoginModal from './components/LoginModal';
 
+import { initialHome } from './data';
+import { Course, DocumentItem, NewsItem, HomeConfig } from './types';
+import {
+  fetchNewsFromConvex,
+  pushNewsToConvex,
+  fetchDocsFromConvex,
+  pushDocsToConvex,
+  fetchCoursesFromConvex,
+  pushCoursesToConvex,
+  fetchHomeFromConvex,
+  pushHomeToConvex,
+} from './convexClient';
+
 const pageTitles: Record<string, string> = {
-  '/': 'Главная панель',
-  '/news': 'Новости компании',
+  '/': 'Главная страница',
+  '/news': 'Лента новостей',
   '/tasks': 'Задачи',
   '/lms': 'Обучение',
   '/store': 'Мерч',
@@ -31,14 +42,15 @@ const pageTitles: Record<string, string> = {
 const Layout: React.FC = () => {
   const location = useLocation();
   const [adminMode, setAdminMode] = useState(false);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>(initialNews);
-  const [docs, setDocs] = useState<DocumentItem[]>(initialDocs);
-  const [courses, setCourses] = useState<Course[]>(initialCourses);
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [docs, setDocs] = useState<DocumentItem[]>([]);
+  const [courses, setCourses] = useState<Course[]>([]);
   const [home, setHome] = useState<HomeConfig>(initialHome);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('convex_token'));
   const [authEmail, setAuthEmail] = useState<string | null>(() => localStorage.getItem('convex_email'));
   const [showLogin, setShowLogin] = useState(false);
+
   const title = pageTitles[location.pathname] ?? 'Portal';
 
   useEffect(() => {
@@ -52,6 +64,9 @@ const Layout: React.FC = () => {
     });
     fetchCoursesFromConvex().then((items) => {
       if (items && items.length) setCourses(items);
+    });
+    fetchHomeFromConvex().then((config) => {
+      if (config) setHome(config);
     });
   }, []);
 
@@ -68,6 +83,11 @@ const Layout: React.FC = () => {
   const handleCoursesChange = async (items: Course[]) => {
     setCourses(items);
     await pushCoursesToConvex(items, authToken);
+  };
+
+  const handleHomeChange = async (config: HomeConfig) => {
+    setHome(config);
+    await pushHomeToConvex(config, authToken);
   };
 
   const handleAuth = (token: string, email: string) => {
@@ -90,8 +110,8 @@ const Layout: React.FC = () => {
         <LoginModal
           open={showLogin}
           onClose={() => setShowLogin(false)}
-          onAuth={(t, e) => {
-            handleAuth(t, e);
+          onAuth={(token, email) => {
+            handleAuth(token, email);
             setShowLogin(false);
           }}
         />
@@ -125,7 +145,7 @@ const Layout: React.FC = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
                 <input
                   type="text"
-                  placeholder="Поиск документов, контактов..."
+                  placeholder="Поиск документов, новостей..."
                   className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 text-xs focus:outline-none focus:border-dorren-blue transition-colors"
                 />
               </div>
@@ -142,9 +162,11 @@ const Layout: React.FC = () => {
                   }
                   setAdminMode(!adminMode);
                 }}
-                className={`px-3 py-2 text-xs uppercase tracking-wider border ${adminMode ? 'bg-dorren-dark text-white border-dorren-dark' : 'border-dorren-dark text-dorren-dark hover:bg-dorren-dark hover:text-white'} transition-colors`}
+                className={`px-3 py-2 text-xs uppercase tracking-wider border ${
+                  adminMode ? 'bg-dorren-dark text-white border-dorren-dark' : 'border-dorren-dark text-dorren-dark hover:bg-dorren-dark hover:text-white'
+                } transition-colors`}
               >
-                {adminMode ? 'Режим ON' : 'Режим OFF'}
+                {adminMode ? 'Админ ON' : 'Админ OFF'}
               </button>
             </div>
           </header>
@@ -162,18 +184,18 @@ const Layout: React.FC = () => {
                 path="/admin"
                 element={
                   <AdminPanel
-                  news={newsItems}
-                  docs={docs}
-                  courses={courses}
-                  home={home}
-                  onNewsChange={handleNewsChange}
-                  onDocsChange={handleDocsChange}
-                  onCoursesChange={handleCoursesChange}
-                  onHomeChange={setHome}
-                  adminEnabled={adminMode}
-                  authToken={authToken}
-                />
-              }
+                    news={newsItems}
+                    docs={docs}
+                    courses={courses}
+                    home={home}
+                    onNewsChange={handleNewsChange}
+                    onDocsChange={handleDocsChange}
+                    onCoursesChange={handleCoursesChange}
+                    onHomeChange={handleHomeChange}
+                    adminEnabled={adminMode}
+                    authToken={authToken}
+                  />
+                }
               />
               <Route path="/company" element={<Company />} />
               <Route path="*" element={<Dashboard home={home} />} />

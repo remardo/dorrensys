@@ -534,6 +534,15 @@ const TableView: React.FC<{
 
 const TasksKanban: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>(LOCAL_TASKS);
+  
+  // Загрузка данных из Convex при инициализации
+  useEffect(() => {
+    fetchTasksFromConvex().then((convexTasks) => {
+      if (convexTasks && convexTasks.length > 0) {
+        setTasks(convexTasks);
+      }
+    });
+  }, []);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [filterAssignee, setFilterAssignee] = useState<string>('all');
   const [filterPriority, setFilterPriority] = useState<string>('all');
@@ -785,9 +794,3 @@ const TasksKanban: React.FC = () => {
 };
 
 export default TasksKanban;
-  // подхватываем задачи из Convex при наличии URL
-  useEffect(() => {
-    fetchTasksFromConvex().then((items) => {
-      if (items && items.length) setTasks(items);
-    });
-  }, []);

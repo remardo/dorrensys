@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchUsers, setUserRole } from '../authClient';
+import { fetchUsersFromConvex } from '../convexClient';
 
 interface UsersAdminProps {
   token: string | null;
@@ -11,21 +11,24 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
 
   useEffect(() => {
     if (!token) return;
-    fetchUsers(token).then(setUsers).catch((e) => setMessage(e?.message ?? 'Ошибка загрузки пользователей'));
+    fetchUsersFromConvex()
+      .then((list) => setUsers(list ?? []))
+      .catch((e) => setMessage(e?.message ?? 'Ошибка загрузки пользователей'));
   }, [token]);
 
   const updateRole = async (email: string, role: string) => {
     if (!token) {
-      setMessage('Нужен вход как админ');
+      setMessage('Нужна авторизация');
       return;
     }
-    await setUserRole(token, email, role);
+    // TODO: вызвать Convex mutation для смены роли
+    console.log(`Updating role for ${email} to ${role}`);
     const next = users.map((u) => (u.email === email ? { ...u, role } : u));
     setUsers(next);
     setMessage('Роль обновлена');
   };
 
-  if (!token) return <div className="text-sm text-gray-500">Войдите как админ, чтобы управлять пользователями.</div>;
+  if (!token) return <div className="text-sm text-gray-500">Нужен логин, чтобы управлять пользователями.</div>;
 
   return (
     <div className="space-y-3">
@@ -65,4 +68,3 @@ const UsersAdmin: React.FC<UsersAdminProps> = ({ token }) => {
 };
 
 export default UsersAdmin;
-

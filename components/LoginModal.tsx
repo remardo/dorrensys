@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Mail, LogIn, X, ArrowRight, Loader2, Shield } from 'lucide-react';
-import { requestEmailCode, verifyEmailCode } from '../authClient';
+import { requestAuthCode, verifyAuthCode } from '../convexClient';
 
 interface LoginModalProps {
   open: boolean;
@@ -23,7 +23,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onAuth }) => {
     }
     setLoading(true);
     try {
-      const resp = await requestEmailCode(email);
+      const resp = await requestAuthCode(email);
       setMessage(resp ? `Код отправлен (dev: ${resp})` : 'Код отправлен на почту');
     } catch (e: any) {
       setMessage(e?.message ?? 'Ошибка запроса кода');
@@ -39,7 +39,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ open, onClose, onAuth }) => {
     }
     setLoading(true);
     try {
-      const token = await verifyEmailCode(email, code);
+      const authResult = await verifyAuthCode(email, code);
+      const token = authResult.token;
       if (token) {
         onAuth(token, email);
         setMessage('Вы успешно вошли');

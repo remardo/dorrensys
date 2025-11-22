@@ -1,10 +1,12 @@
 
 export interface User {
   id: string;
+  email?: string;
   name: string;
   role: string;
   avatar: string;
   coins: number;
+  createdAt?: string;
 }
 
 export interface NavItem {
@@ -24,6 +26,7 @@ export interface NewsItem {
    description?: string;
   slug?: string;
   body?: string[];
+  createdAt?: number;
 }
 
 export interface HeroBlock {
@@ -84,6 +87,7 @@ export interface Course {
   category?: string;
   description?: string;
   author?: string;
+  createdAt?: number;
 }
 
 export type ModuleKind = 'video' | 'article' | 'image' | 'quiz' | 'assessment';
@@ -127,7 +131,10 @@ export interface Task {
   description?: string;
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
-  assignee?: User;
+  assigneeEmail?: string;
+  assigneeName?: string;
+  assigneeAvatar?: string;
+  assignee?: User; // Для обратной совместимости
   createdAt?: string;
 }
 

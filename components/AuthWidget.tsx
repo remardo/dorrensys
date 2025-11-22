@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { requestEmailCode, verifyEmailCode } from '../authClient';
+import { requestAuthCode, verifyAuthCode } from '../convexClient';
 
 interface AuthWidgetProps {
   token: string | null;
@@ -18,7 +18,7 @@ const AuthWidget: React.FC<AuthWidgetProps> = ({ token, email, onAuth, onLogout 
     if (!inputEmail) return setMessage('Введите email');
     setLoading(true);
     try {
-      const respCode = await requestEmailCode(inputEmail);
+      const respCode = await requestAuthCode(inputEmail);
       setMessage(respCode ? `Код отправлен (dev: ${respCode})` : 'Код отправлен');
     } catch (e: any) {
       setMessage(e?.message ?? 'Ошибка запроса кода');
@@ -31,7 +31,8 @@ const AuthWidget: React.FC<AuthWidgetProps> = ({ token, email, onAuth, onLogout 
     if (!inputEmail || !code) return setMessage('Введите email и код');
     setLoading(true);
     try {
-      const token = await verifyEmailCode(inputEmail, code);
+      const authResult = await verifyAuthCode(inputEmail, code);
+      const token = authResult.token;
       if (token) {
         onAuth(token, inputEmail);
         setMessage('Успешный вход');
