@@ -9,6 +9,7 @@ interface DocsProps {
 
 const normalizeLink = (link: string) => (link.startsWith('//') ? `https:${link}` : link);
 const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
+const isYaBrowser = typeof navigator !== 'undefined' && /YaBrowser/i.test(navigator.userAgent || '');
 
 const officeViewerUrl = (link: string) => `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(link)}`;
 
@@ -37,6 +38,11 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
 
     const resolveLink = async (link: string) => {
       const normalized = normalizeLink(link);
+
+      // пустая/якорная ссылка — считаем, что файла нет
+      if (!normalized || normalized === '#' || normalized === '') return null;
+      // база Convex без storageId
+      if (convexUrl && normalized.replace(/\/+$/, '') === convexUrl.replace(/\/+$/, '')) return null;
 
       // Если нет базового Convex URL, возвращаем исходную ссылку как есть
       if (!convexUrl) return normalized;
@@ -69,6 +75,10 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
 
     const load = async () => {
       const resolved = await resolveLink(selected.link);
+      if (!resolved) {
+        setPdfError('Для документа не указана ссылка на файл.');
+        return;
+      }
       if (cancelled) return;
 
       setPdfLoading(true);
@@ -81,6 +91,8 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
       fetch(resolved)
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const ct = res.headers.get('content-type') || '';
+          if (!ct.toLowerCase().includes('pdf')) throw new Error('Not a PDF');
           return res.blob();
         })
         .then((blob) => {
@@ -262,12 +274,30 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
                   }
 
                   return (
-                    <iframe
-                      title={selected.title}
-                      src={pdfPreviewUrl}
-                      className="w-full h-full border-0"
-                      sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-                    />
+                    <div className="w-full h-full relative">
+                      <object data={pdfPreviewUrl} type="application/pdf" className="w-full h-full">
+                        <div className="h-full flex flex-col items-center justify-center text-sm text-gray-600 px-6 text-center space-y-3">
+                          <div>Браузер блокирует встраиваемый PDF.</div>
+                          <div className="flex gap-2 justify-center">
+                            <a
+                              href={pdfPreviewUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-4 py-2 border border-gray-300 text-xs uppercase tracking-wider hover:border-dorren-blue hover:text-dorren-blue"
+                            >
+                              Открыть в новой вкладке
+                            </a>
+                            <a
+                              href={pdfPreviewUrl}
+                              download={selected.title || 'document.pdf'}
+                              className="px-4 py-2 border border-gray-300 text-xs uppercase tracking-wider hover:border-dorren-blue hover:text-dorren-blue"
+                            >
+                              Скачать
+                            </a>
+                          </div>
+                        </div>
+                      </object>
+                    </div>
                   );
                 }
 
