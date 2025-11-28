@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Download, FileText, Link as LinkIcon, Shield, Search, X } from 'lucide-react';
 import { DocumentItem } from '../types';
+import { getStorageUrl } from '../convexClient';
 
 interface DocsProps {
   docs: DocumentItem[];
 }
 
 const normalizeLink = (link: string) => (link.startsWith('//') ? `https:${link}` : link);
+const convexUrl = import.meta.env.VITE_CONVEX_URL as string | undefined;
 
 const officeViewerUrl = (link: string) => `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(link)}`;
 
@@ -33,6 +35,20 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
     let cancelled = false;
     let objectUrl: string | null = null;
 
+    const resolveLink = async (link: string) => {
+      const normalized = normalizeLink(link);
+      const looksLikeStorageId = /^[a-z0-9]{10,}$/i.test(normalized) && !/^https?:/i.test(normalized);
+      if (looksLikeStorageId) {
+        const url = await getStorageUrl(normalized);
+        if (url) return url;
+        if (convexUrl) return `${convexUrl}/api/storage/${normalized}`;
+      }
+      if (!/^https?:/i.test(normalized) && convexUrl) {
+        return `${convexUrl}/${normalized.replace(/^\//, '')}`;
+      }
+      return normalized;
+    };
+
     const resetPreview = () => {
       setPdfPreviewUrl((prev) => {
         if (prev) URL.revokeObjectURL(prev);
@@ -47,30 +63,36 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
       return;
     }
 
-    const normalized = normalizeLink(selected.link);
-    setPdfLoading(true);
-    setPdfError(null);
-    setPdfPreviewUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    const load = async () => {
+      const resolved = await resolveLink(selected.link);
+      if (cancelled) return;
 
-    fetch(normalized)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.blob();
-      })
-      .then((blob) => {
-        if (cancelled) return;
-        objectUrl = URL.createObjectURL(blob);
-        setPdfPreviewUrl(objectUrl);
-      })
-      .catch(() => {
-        if (!cancelled) setPdfError('Не удалось загрузить PDF для предпросмотра. Откройте в новой вкладке или скачайте файл.');
-      })
-      .finally(() => {
-        if (!cancelled) setPdfLoading(false);
+      setPdfLoading(true);
+      setPdfError(null);
+      setPdfPreviewUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return null;
       });
+
+      fetch(resolved)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.blob();
+        })
+        .then((blob) => {
+          if (cancelled) return;
+          objectUrl = URL.createObjectURL(blob);
+          setPdfPreviewUrl(objectUrl);
+        })
+        .catch(() => {
+          if (!cancelled) setPdfError('Не удалось загрузить PDF для предпросмотра. Откройте в новой вкладке или скачайте файл.');
+        })
+        .finally(() => {
+          if (!cancelled) setPdfLoading(false);
+        });
+    };
+
+    load();
 
     return () => {
       cancelled = true;
