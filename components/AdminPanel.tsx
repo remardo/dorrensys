@@ -9,8 +9,11 @@ import {
   QuizQuestion,
   HomeConfig,
 } from '../types';
-import { Save, AlertTriangle, Plus, Trash, GripVertical, Upload, Image as ImageIcon, Layers, FileText, BookOpen, HelpCircle } from 'lucide-react';
+import { Save, AlertTriangle, Plus, Trash, Upload, Image as ImageIcon, Layers, FileText, BookOpen, HelpCircle } from 'lucide-react';
 import UsersAdmin from './UsersAdmin';
+import { uploadFileToConvex } from '../convexClient';
+import Field from './admin/Field';
+import ListCard from './admin/ListCard';
 
 type TabKey = 'news' | 'docs' | 'courses' | 'home' | 'users';
 
@@ -83,35 +86,6 @@ const emptyQuestion = (): QuizQuestion => ({
   correctIndex: 0,
 });
 
-const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <div>
-    <label className="block text-xs text-gray-500 uppercase tracking-wider mb-1">{label}</label>
-    {children}
-  </div>
-);
-
-const ListCard: React.FC<{
-  active: boolean;
-  onClick: () => void;
-  onDelete: () => void;
-  dragProps?: any;
-  title: string;
-  subtitle?: string;
-}> = ({ active, onClick, onDelete, dragProps, title, subtitle }) => (
-  <div
-    {...dragProps}
-    className={`flex items-center gap-3 p-3 border ${active ? 'border-dorren-blue bg-dorren-blue/5' : 'border-gray-200'} hover:border-dorren-blue transition-colors`}
-  >
-    <GripVertical size={14} className="text-gray-400 cursor-move" />
-    <button className="flex-1 text-left" onClick={onClick}>
-      <p className="text-sm font-semibold text-dorren-black line-clamp-1">{title || 'Без названия'}</p>
-      {subtitle && <p className="text-xs text-gray-500 line-clamp-1">{subtitle}</p>}
-    </button>
-    <button onClick={onDelete} className="text-red-500 hover:text-red-700">
-      <Trash size={14} />
-    </button>
-  </div>
-);
 const AdminPanel: React.FC<AdminPanelProps> = ({
   news,
   docs,
@@ -138,6 +112,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
   const [newsCategoryFilter, setNewsCategoryFilter] = useState('Все');
   const [docCategoryFilter, setDocCategoryFilter] = useState('Все');
   const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (file: File, onUrl: (url: string) => void) => {
+    setError('');
+    setUploading(true);
+    try {
+      const { url } = await uploadFileToConvex(file);
+      onUrl(url);
+    } catch (e: any) {
+      setError(e?.message ?? 'Не удалось загрузить файл');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => setNewsList(news), [news]);
   useEffect(() => setDocsList(docs), [docs]);
@@ -344,6 +332,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 setNewsList((prev) => prev.map((n) => (n.id === selectedNews.id ? { ...n, image: e.target.value } : n)))
               }
             />
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  handleUpload(file, (url) =>
+                    setNewsList((prev) => prev.map((n) => (n.id === selectedNews.id ? { ...n, image: url } : n))),
+                  );
+                }}
+              />
+              {uploading && <span className="text-xs text-gray-500">Загрузка...</span>}
+            </div>
             <div
               onDrop={(e) => {
                 e.preventDefault();
@@ -471,13 +473,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               />
             </Field>
             <Field label="Ссылка / путь">
+            <input
+              className="w-full border border-gray-200 px-3 py-2 text-sm"
+              value={selectedDoc.link}
+              onChange={(e) =>
+                setDocsList((prev) => prev.map((d) => (d.id === selectedDoc.id ? { ...d, link: e.target.value } : d)))
+              }
+            />
+            <div className="mt-2 flex items-center gap-2">
               <input
-                className="w-full border border-gray-200 px-3 py-2 text-sm"
-                value={selectedDoc.link}
-                onChange={(e) =>
-                  setDocsList((prev) => prev.map((d) => (d.id === selectedDoc.id ? { ...d, link: e.target.value } : d)))
-                }
+                type="file"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  handleUpload(file, (url) =>
+                    setDocsList((prev) => prev.map((d) => (d.id === selectedDoc.id ? { ...d, link: url, size: `${(file.size / 1024 / 1024).toFixed(1)} MB` } : d))),
+                  );
+                }}
               />
+              {uploading && <span className="text-xs text-gray-500">Загрузка...</span>}
+            </div>
             </Field>
           </div>
           <div
@@ -601,6 +616,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
               </Field>
               <Field label="Обложка (URL)">
                 <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={selectedCourse.thumbnail} onChange={(e) => updateCourse('thumbnail', e.target.value)} />
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      handleUpload(file, (url) => updateCourse('thumbnail', url));
+                    }}
+                  />
+                  {uploading && <span className="text-xs text-gray-500">Загрузка...</span>}
+                </div>
               </Field>
             </div>
 
@@ -700,6 +727,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                       </Field>
                       <Field label="Изображение (URL)">
                         <input className="w-full border border-gray-200 px-3 py-2 text-sm" value={selectedModule.imageUrl ?? ''} onChange={(e) => updateModule('imageUrl', e.target.value)} />
+                        <div className="mt-2 flex items-center gap-2">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              handleUpload(file, (url) => updateModule('imageUrl', url));
+                            }}
+                          />
+                          {uploading && <span className="text-xs text-gray-500">Загрузка...</span>}
+                        </div>
                       </Field>
                     </div>
 

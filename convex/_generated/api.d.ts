@@ -15,6 +15,7 @@ import type * as home from "../home.js";
 import type * as initData from "../initData.js";
 import type * as news from "../news.js";
 import type * as tasks from "../tasks.js";
+import type * as uploads from "../uploads.js";
 import type * as users from "../users.js";
 
 import type {
@@ -31,6 +32,7 @@ declare const fullApi: ApiFromModules<{
   initData: typeof initData;
   news: typeof news;
   tasks: typeof tasks;
+  uploads: typeof uploads;
   users: typeof users;
 }>;
 
