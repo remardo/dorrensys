@@ -70,24 +70,51 @@ const Layout: React.FC = () => {
     });
   }, []);
 
+  const handleAuthError = (error: any) => {
+    const msg = String(error?.message ?? '').toLowerCase();
+    if (msg.includes('�����') || msg.includes('session') || msg.includes('устарела') || msg.includes('token')) {
+      handleLogout();
+      setShowLogin(true);
+    } else {
+      console.error('Convex mutation failed', error);
+      alert('Ошибка сохранения: ' + (error?.message ?? 'неизвестная ошибка'));
+    }
+  };
+
   const handleNewsChange = async (items: NewsItem[]) => {
     setNewsItems(items);
-    await pushNewsToConvex(items, authToken);
+    try {
+      await pushNewsToConvex(items, authToken);
+    } catch (e) {
+      handleAuthError(e);
+    }
   };
 
   const handleDocsChange = async (items: DocumentItem[]) => {
     setDocs(items);
-    await pushDocsToConvex(items, authToken);
+    try {
+      await pushDocsToConvex(items, authToken);
+    } catch (e) {
+      handleAuthError(e);
+    }
   };
 
   const handleCoursesChange = async (items: Course[]) => {
     setCourses(items);
-    await pushCoursesToConvex(items, authToken);
+    try {
+      await pushCoursesToConvex(items, authToken);
+    } catch (e) {
+      handleAuthError(e);
+    }
   };
 
   const handleHomeChange = async (config: HomeConfig) => {
     setHome(config);
-    await pushHomeToConvex(config, authToken);
+    try {
+      await pushHomeToConvex(config, authToken);
+    } catch (e) {
+      handleAuthError(e);
+    }
   };
 
   const handleAuth = (token: string, email: string) => {
