@@ -37,13 +37,17 @@ const Docs: React.FC<DocsProps> = ({ docs }) => {
 
     const resolveLink = async (link: string) => {
       const normalized = normalizeLink(link);
+
+      // Если нет базового Convex URL, возвращаем исходную ссылку как есть
+      if (!convexUrl) return normalized;
+
       const looksLikeStorageId = /^[a-z0-9]{10,}$/i.test(normalized) && !/^https?:/i.test(normalized);
       if (looksLikeStorageId) {
         const url = await getStorageUrl(normalized);
         if (url) return url;
-        if (convexUrl) return `${convexUrl}/api/storage/${normalized}`;
+        return `${convexUrl}/api/storage/${normalized}`;
       }
-      if (!/^https?:/i.test(normalized) && convexUrl) {
+      if (!/^https?:/i.test(normalized)) {
         return `${convexUrl}/${normalized.replace(/^\//, '')}`;
       }
       return normalized;
